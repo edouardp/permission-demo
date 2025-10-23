@@ -1,5 +1,11 @@
 namespace PermissionsApi.Models;
 
+public class Permission
+{
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+}
+
 public class Group
 {
     public string Id { get; set; } = Guid.NewGuid().ToString();
@@ -35,4 +41,15 @@ public class PermissionsResponse
 {
     public string Email { get; set; } = string.Empty;
     public Dictionary<string, bool> Permissions { get; set; } = new();
+}
+
+public class CreatePermissionRequest
+{
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+}
+
+public class UpdatePermissionRequest
+{
+    public string Description { get; set; } = string.Empty;
 }

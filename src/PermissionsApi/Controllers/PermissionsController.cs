@@ -15,7 +15,46 @@ public class PermissionsController : ControllerBase
         _repository = repository;
     }
 
-    [HttpGet("permissions/{email}")]
+    [HttpPost("permissions")]
+    public IActionResult CreatePermission([FromBody] CreatePermissionRequest request)
+    {
+        var permission = _repository.CreatePermission(request.Name, request.Description);
+        return CreatedAtAction(nameof(GetPermission), new { name = permission.Name }, permission);
+    }
+
+    [HttpGet("permissions")]
+    public IActionResult GetAllPermissions()
+    {
+        var permissions = _repository.GetAllPermissions();
+        return Ok(permissions);
+    }
+
+    [HttpGet("permissions/{name}")]
+    public IActionResult GetPermission(string name)
+    {
+        var permission = _repository.GetPermission(name);
+        if (permission == null)
+            return NotFound();
+        return Ok(permission);
+    }
+
+    [HttpPut("permissions/{name}")]
+    public IActionResult UpdatePermission(string name, [FromBody] UpdatePermissionRequest request)
+    {
+        if (!_repository.UpdatePermission(name, request.Description))
+            return NotFound();
+        return Ok();
+    }
+
+    [HttpDelete("permissions/{name}")]
+    public IActionResult DeletePermission(string name)
+    {
+        if (!_repository.DeletePermission(name))
+            return NotFound();
+        return NoContent();
+    }
+
+    [HttpGet("permissions/user/{email}")]
     public IActionResult GetPermissions(string email)
     {
         var permissions = _repository.CalculatePermissions(email);

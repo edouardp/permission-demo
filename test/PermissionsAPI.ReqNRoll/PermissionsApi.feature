@@ -10,6 +10,132 @@ Feature: Permissions API
   #
   # Users are identified by email and can belong to 0 to many groups.
 
+  Scenario: CRUD operations for permissions
+    # Tests creating, reading, updating, and deleting permission definitions.
+    # Permissions are metadata that define what actions exist in the system.
+    
+    Given the variable 'PERM_NAME' is set to 'execute-{{GUID()}}'
+    
+    # Verify permission doesn't exist yet
+    Given the following request
+    """
+    GET /api/permissions/{{PERM_NAME}} HTTP/1.1
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 404 NotFound
+    Content-Type: application/problem+json
+
+    {
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.5",
+      "title": "Not Found",
+      "status": 404
+    }
+    """
+    
+    # Create a new permission
+    Given the following request
+    """
+    POST /api/permissions HTTP/1.1
+    Content-Type: application/json
+
+    {
+      "name": "{{PERM_NAME}}",
+      "description": "Allows execution of scripts"
+    }
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 201 Created
+    Content-Type: application/json
+
+    {
+      "name": "{{PERM_NAME}}",
+      "description": "Allows execution of scripts"
+    }
+    """
+
+    # Read the permission
+    Given the following request
+    """
+    GET /api/permissions/{{PERM_NAME}} HTTP/1.1
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 200 OK
+    Content-Type: application/json
+
+    {
+      "name": "{{PERM_NAME}}",
+      "description": "Allows execution of scripts"
+    }
+    """
+
+    # Update the permission description
+    Given the following request
+    """
+    PUT /api/permissions/{{PERM_NAME}} HTTP/1.1
+    Content-Type: application/json
+
+    {
+      "description": "Allows execution of scripts and commands"
+    }
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 200 OK
+    """
+
+    # Read the updated permission
+    Given the following request
+    """
+    GET /api/permissions/{{PERM_NAME}} HTTP/1.1
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 200 OK
+    Content-Type: application/json
+
+    {
+      "name": "{{PERM_NAME}}",
+      "description": "Allows execution of scripts and commands"
+    }
+    """
+
+    # Delete the permission
+    Given the following request
+    """
+    DELETE /api/permissions/{{PERM_NAME}} HTTP/1.1
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 204 NoContent
+    """
+
+    # Verify permission is deleted (should return 404)
+    Given the following request
+    """
+    GET /api/permissions/{{PERM_NAME}} HTTP/1.1
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 404 NotFound
+    Content-Type: application/problem+json
+
+    {
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.5",
+      "title": "Not Found",
+      "status": 404
+    }
+    """
+
   Scenario: Check permissions for user with only default permissions
     # Tests that a user who doesn't exist in the system still gets default permissions.
     # This verifies the first level of the permission hierarchy.
@@ -20,7 +146,7 @@ Feature: Permissions API
     # Query permissions for a user that hasn't been created yet
     Given the following request
     """
-    GET /api/permissions/{{USER_EMAIL}} HTTP/1.1
+    GET /api/permissions/user/{{USER_EMAIL}} HTTP/1.1
     """
 
     # Should return default permissions only
@@ -104,7 +230,7 @@ Feature: Permissions API
     # Verify user has both default "read" and group-inherited "write" permissions
     Given the following request
     """
-    GET /api/permissions/{{USER_EMAIL}} HTTP/1.1
+    GET /api/permissions/user/{{USER_EMAIL}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -210,7 +336,7 @@ Feature: Permissions API
     # User should have "read": false instead of the default "read": true
     Given the following request
     """
-    GET /api/permissions/{{USER_EMAIL}} HTTP/1.1
+    GET /api/permissions/user/{{USER_EMAIL}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -332,7 +458,7 @@ Feature: Permissions API
     # User should have "delete": true despite group having "delete": DENY
     Given the following request
     """
-    GET /api/permissions/{{USER_EMAIL}} HTTP/1.1
+    GET /api/permissions/user/{{USER_EMAIL}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -475,7 +601,7 @@ Feature: Permissions API
     # Should have: "read" (default), "write" (from editors), "delete" (from admins)
     Given the following request
     """
-    GET /api/permissions/{{USER_EMAIL}} HTTP/1.1
+    GET /api/permissions/user/{{USER_EMAIL}} HTTP/1.1
     """
 
     Then the API returns the following response

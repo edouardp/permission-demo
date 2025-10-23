@@ -4,9 +4,43 @@ namespace PermissionsApi.Services;
 
 public class PermissionsRepository
 {
+    private readonly Dictionary<string, Permission> _permissions = new();
     private readonly Dictionary<string, Group> _groups = new();
     private readonly Dictionary<string, User> _users = new();
     private readonly Dictionary<string, bool> _defaultPermissions = new() { { "read", true } };
+
+    public Permission CreatePermission(string name, string description)
+    {
+        var permission = new Permission { Name = name, Description = description };
+        _permissions[name] = permission;
+        return permission;
+    }
+
+    public Permission? GetPermission(string name)
+    {
+        _permissions.TryGetValue(name, out var permission);
+        return permission;
+    }
+
+    public List<Permission> GetAllPermissions()
+    {
+        return _permissions.Values.ToList();
+    }
+
+    public bool UpdatePermission(string name, string description)
+    {
+        if (_permissions.TryGetValue(name, out var permission))
+        {
+            permission.Description = description;
+            return true;
+        }
+        return false;
+    }
+
+    public bool DeletePermission(string name)
+    {
+        return _permissions.Remove(name);
+    }
 
     public Group CreateGroup(string name)
     {
