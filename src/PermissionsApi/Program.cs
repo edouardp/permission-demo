@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using PermissionsApi.Services;
+using Serilog;
+using Serilog.Formatting.Compact;
 
 namespace PermissionsApi
 {
@@ -9,26 +11,48 @@ namespace PermissionsApi
     {
         public static void Main(string[] args)
         {
-            var builder = WebApplication.CreateBuilder(args);
+            Log.Logger = new LoggerConfiguration()
+                .WriteTo.Console(new CompactJsonFormatter())
+                .Enrich.FromLogContext()
+                .Enrich.WithProperty("Application", "PermissionsApi")
+                .CreateLogger();
 
-            builder.Services.AddSingleton<PermissionsRepository>();
-            builder.Services.AddControllers();
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
-
-            var app = builder.Build();
-
-            if (app.Environment.IsDevelopment())
+            try
             {
-                app.UseSwagger();
-                app.UseSwaggerUI();
+                Log.Information("Starting PermissionsApi");
+                
+                var builder = WebApplication.CreateBuilder(args);
+
+                builder.Host.UseSerilog();
+
+                builder.Services.AddSingleton<IPermissionsRepository, PermissionsRepository>();
+                builder.Services.AddControllers();
+                builder.Services.AddEndpointsApiExplorer();
+                builder.Services.AddSwaggerGen();
+
+                var app = builder.Build();
+
+                if (app.Environment.IsDevelopment())
+                {
+                    app.UseSwagger();
+                    app.UseSwaggerUI();
+                }
+
+                app.UseSerilogRequestLogging();
+                app.UseHttpsRedirection();
+                app.UseAuthorization();
+                app.MapControllers();
+
+                app.Run();
             }
-
-            app.UseHttpsRedirection();
-            app.UseAuthorization();
-            app.MapControllers();
-
-            app.Run();
+            catch (Exception ex)
+            {
+                Log.Fatal(ex, "Application terminated unexpectedly");
+            }
+            finally
+            {
+                Log.CloseAndFlush();
+            }
         }
     }
 }

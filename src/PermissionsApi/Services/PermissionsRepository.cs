@@ -1,79 +1,97 @@
 using System.Collections.Concurrent;
+using Microsoft.Extensions.Logging;
 using PermissionsApi.Models;
 
 namespace PermissionsApi.Services;
 
-public class PermissionsRepository
+public class PermissionsRepository : IPermissionsRepository
 {
     private readonly ConcurrentDictionary<string, Permission> _permissions = new();
     private readonly ConcurrentDictionary<string, Group> _groups = new();
     private readonly ConcurrentDictionary<string, User> _users = new();
     private readonly Dictionary<string, bool> _defaultPermissions = new() { { "read", true } };
+    private readonly ILogger<PermissionsRepository> _logger;
 
-    public Permission CreatePermission(string name, string description)
+    public PermissionsRepository(ILogger<PermissionsRepository> logger)
+    {
+        _logger = logger;
+    }
+
+    public Task<Permission> CreatePermissionAsync(string name, string description, CancellationToken ct)
     {
         var permission = new Permission { Name = name, Description = description };
         _permissions[name] = permission;
-        return permission;
+        _logger.LogInformation("Created permission {PermissionName}", name);
+        return Task.FromResult(permission);
     }
 
-    public Permission? GetPermission(string name)
+    public Task<Permission?> GetPermissionAsync(string name, CancellationToken ct)
     {
         _permissions.TryGetValue(name, out var permission);
-        return permission;
+        return Task.FromResult(permission);
     }
 
-    public List<Permission> GetAllPermissions()
+    public Task<List<Permission>> GetAllPermissionsAsync(CancellationToken ct)
     {
-        return _permissions.Values.ToList();
+        return Task.FromResult(_permissions.Values.ToList());
     }
 
-    public bool UpdatePermission(string name, string description)
+    public Task<bool> UpdatePermissionAsync(string name, string description, CancellationToken ct)
     {
         if (_permissions.TryGetValue(name, out var permission))
         {
-            permission.Description = description;
-            return true;
+            _permissions[name] = permission with { Description = description };
+            _logger.LogInformation("Updated permission {PermissionName}", name);
+            return Task.FromResult(true);
         }
-        return false;
+        return Task.FromResult(false);
     }
 
-    public bool DeletePermission(string name)
+    public Task<bool> DeletePermissionAsync(string name, CancellationToken ct)
     {
-        return _permissions.TryRemove(name, out _);
+        var result = _permissions.TryRemove(name, out _);
+        if (result)
+            _logger.LogInformation("Deleted permission {PermissionName}", name);
+        return Task.FromResult(result);
     }
 
-    public Group CreateGroup(string name)
+    public Task<Group> CreateGroupAsync(string name, CancellationToken ct)
     {
-        var group = new Group { Name = name };
+        var group = new Group { Id = Guid.NewGuid().ToString(), Name = name };
         _groups[group.Id] = group;
-        return group;
+        _logger.LogInformation("Created group {GroupId} with name {GroupName}", group.Id, name);
+        return Task.FromResult(group);
     }
 
-    public void SetGroupPermission(string groupId, string permission, string access)
+    public Task SetGroupPermissionAsync(string groupId, string permission, string access, CancellationToken ct)
     {
         if (_groups.TryGetValue(groupId, out var group))
         {
             group.Permissions[permission] = access;
+            _logger.LogInformation("Set group {GroupId} permission {Permission} to {Access}", groupId, permission, access);
         }
+        return Task.CompletedTask;
     }
 
-    public User CreateUser(string email, List<string> groups)
+    public Task<User> CreateUserAsync(string email, List<string> groups, CancellationToken ct)
     {
         var user = new User { Email = email, Groups = groups };
         _users[email] = user;
-        return user;
+        _logger.LogInformation("Created user {Email} with {GroupCount} groups", email, groups.Count);
+        return Task.FromResult(user);
     }
 
-    public void SetUserPermission(string email, string permission, string access)
+    public Task SetUserPermissionAsync(string email, string permission, string access, CancellationToken ct)
     {
         if (_users.TryGetValue(email, out var user))
         {
             user.Permissions[permission] = access;
+            _logger.LogInformation("Set user {Email} permission {Permission} to {Access}", email, permission, access);
         }
+        return Task.CompletedTask;
     }
 
-    public Dictionary<string, bool> CalculatePermissions(string email)
+    public Task<Dictionary<string, bool>> CalculatePermissionsAsync(string email, CancellationToken ct)
     {
         var result = new Dictionary<string, bool>(_defaultPermissions);
 
@@ -96,18 +114,30 @@ public class PermissionsRepository
             {
                 result[perm.Key] = perm.Value == "ALLOW";
             }
+            
+            _logger.LogDebug("Calculated {PermissionCount} permissions for user {Email}", result.Count, email);
+        }
+        else
+        {
+            _logger.LogDebug("User {Email} not found, returning default permissions", email);
         }
 
-        return result;
+        return Task.FromResult(result);
     }
 
-    public void DeleteUser(string email)
+    public Task DeleteUserAsync(string email, CancellationToken ct)
     {
-        _users.TryRemove(email, out _);
+        var result = _users.TryRemove(email, out _);
+        if (result)
+            _logger.LogInformation("Deleted user {Email}", email);
+        return Task.CompletedTask;
     }
 
-    public void DeleteGroup(string groupId)
+    public Task DeleteGroupAsync(string groupId, CancellationToken ct)
     {
-        _groups.TryRemove(groupId, out _);
+        var result = _groups.TryRemove(groupId, out _);
+        if (result)
+            _logger.LogInformation("Deleted group {GroupId}", groupId);
+        return Task.CompletedTask;
     }
 }

@@ -29,7 +29,7 @@ Feature: Permissions API
     # Verify permission doesn't exist yet
     Given the following request
     """
-    GET /api/permissions/{{PERM_NAME}} HTTP/1.1
+    GET /api/v1/permissions/{{PERM_NAME}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -47,7 +47,7 @@ Feature: Permissions API
     # Create a new permission
     Given the following request
     """
-    POST /api/permissions HTTP/1.1
+    POST /api/v1/permissions HTTP/1.1
     Content-Type: application/json
 
     {
@@ -70,7 +70,7 @@ Feature: Permissions API
     # Read the permission
     Given the following request
     """
-    GET /api/permissions/{{PERM_NAME}} HTTP/1.1
+    GET /api/v1/permissions/{{PERM_NAME}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -87,7 +87,7 @@ Feature: Permissions API
     # Update the permission description
     Given the following request
     """
-    PUT /api/permissions/{{PERM_NAME}} HTTP/1.1
+    PUT /api/v1/permissions/{{PERM_NAME}} HTTP/1.1
     Content-Type: application/json
 
     {
@@ -103,7 +103,7 @@ Feature: Permissions API
     # Read the updated permission
     Given the following request
     """
-    GET /api/permissions/{{PERM_NAME}} HTTP/1.1
+    GET /api/v1/permissions/{{PERM_NAME}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -120,7 +120,7 @@ Feature: Permissions API
     # Delete the permission
     Given the following request
     """
-    DELETE /api/permissions/{{PERM_NAME}} HTTP/1.1
+    DELETE /api/v1/permissions/{{PERM_NAME}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -131,7 +131,7 @@ Feature: Permissions API
     # Verify permission is deleted (should return 404)
     Given the following request
     """
-    GET /api/permissions/{{PERM_NAME}} HTTP/1.1
+    GET /api/v1/permissions/{{PERM_NAME}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -162,7 +162,7 @@ Feature: Permissions API
     # Query permissions for a user that hasn't been created yet
     Given the following request
     """
-    GET /api/permissions/user/{{USER_EMAIL}} HTTP/1.1
+    GET /api/v1/permissions/user/{{USER_EMAIL}} HTTP/1.1
     """
 
     # Should return default permissions only
@@ -194,7 +194,7 @@ Feature: Permissions API
     # Create user without any groups
     Given the following request
     """
-    POST /api/users HTTP/1.1
+    POST /api/v1/users HTTP/1.1
     Content-Type: application/json
 
     {
@@ -211,7 +211,7 @@ Feature: Permissions API
     # Grant user-specific ALLOW for "write" permission
     Given the following request
     """
-    POST /api/users/{{USER_EMAIL}}/permissions HTTP/1.1
+    POST /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
     Content-Type: application/json
 
     {
@@ -228,7 +228,7 @@ Feature: Permissions API
     # Verify user has default "read" plus user-level "write"
     Given the following request
     """
-    GET /api/permissions/user/{{USER_EMAIL}} HTTP/1.1
+    GET /api/v1/permissions/user/{{USER_EMAIL}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -248,7 +248,7 @@ Feature: Permissions API
     # Cleanup: Delete user
     Given the following request
     """
-    DELETE /api/users/{{USER_EMAIL}} HTTP/1.1
+    DELETE /api/v1/users/{{USER_EMAIL}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -271,7 +271,7 @@ Feature: Permissions API
     # Create user without any groups
     Given the following request
     """
-    POST /api/users HTTP/1.1
+    POST /api/v1/users HTTP/1.1
     Content-Type: application/json
 
     {
@@ -289,7 +289,7 @@ Feature: Permissions API
     # This should override the default "read": true
     Given the following request
     """
-    POST /api/users/{{USER_EMAIL}}/permissions HTTP/1.1
+    POST /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
     Content-Type: application/json
 
     {
@@ -306,7 +306,7 @@ Feature: Permissions API
     # Verify user-level DENY has overridden the default ALLOW
     Given the following request
     """
-    GET /api/permissions/user/{{USER_EMAIL}} HTTP/1.1
+    GET /api/v1/permissions/user/{{USER_EMAIL}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -325,7 +325,7 @@ Feature: Permissions API
     # Cleanup: Delete user
     Given the following request
     """
-    DELETE /api/users/{{USER_EMAIL}} HTTP/1.1
+    DELETE /api/v1/users/{{USER_EMAIL}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -349,7 +349,7 @@ Feature: Permissions API
     # Create user without any groups
     Given the following request
     """
-    POST /api/users HTTP/1.1
+    POST /api/v1/users HTTP/1.1
     Content-Type: application/json
 
     {
@@ -366,7 +366,7 @@ Feature: Permissions API
     # ALLOW write permission
     Given the following request
     """
-    POST /api/users/{{USER_EMAIL}}/permissions HTTP/1.1
+    POST /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
     Content-Type: application/json
 
     {
@@ -383,7 +383,7 @@ Feature: Permissions API
     # ALLOW delete permission
     Given the following request
     """
-    POST /api/users/{{USER_EMAIL}}/permissions HTTP/1.1
+    POST /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
     Content-Type: application/json
 
     {
@@ -400,7 +400,7 @@ Feature: Permissions API
     # DENY execute permission
     Given the following request
     """
-    POST /api/users/{{USER_EMAIL}}/permissions HTTP/1.1
+    POST /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
     Content-Type: application/json
 
     {
@@ -417,7 +417,7 @@ Feature: Permissions API
     # Verify all user-level permissions are applied
     Given the following request
     """
-    GET /api/permissions/user/{{USER_EMAIL}} HTTP/1.1
+    GET /api/v1/permissions/user/{{USER_EMAIL}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -439,7 +439,7 @@ Feature: Permissions API
     # Cleanup: Delete user
     Given the following request
     """
-    DELETE /api/users/{{USER_EMAIL}} HTTP/1.1
+    DELETE /api/v1/users/{{USER_EMAIL}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -464,7 +464,7 @@ Feature: Permissions API
     # Create a group
     Given the following request
     """
-    POST /api/groups HTTP/1.1
+    POST /api/v1/groups HTTP/1.1
     Content-Type: application/json
 
     {
@@ -486,7 +486,7 @@ Feature: Permissions API
     # Grant "write" permission to the group
     Given the following request
     """
-    POST /api/groups/{{GROUP_ID}}/permissions HTTP/1.1
+    POST /api/v1/groups/{{GROUP_ID}}/permissions HTTP/1.1
     Content-Type: application/json
 
     {
@@ -503,7 +503,7 @@ Feature: Permissions API
     # Create user and add them to the group
     Given the following request
     """
-    POST /api/users HTTP/1.1
+    POST /api/v1/users HTTP/1.1
     Content-Type: application/json
 
     {
@@ -520,7 +520,7 @@ Feature: Permissions API
     # Verify user has both default "read" and group-inherited "write" permissions
     Given the following request
     """
-    GET /api/permissions/user/{{USER_EMAIL}} HTTP/1.1
+    GET /api/v1/permissions/user/{{USER_EMAIL}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -540,7 +540,7 @@ Feature: Permissions API
     # Cleanup: Delete user
     Given the following request
     """
-    DELETE /api/users/{{USER_EMAIL}} HTTP/1.1
+    DELETE /api/v1/users/{{USER_EMAIL}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -551,7 +551,7 @@ Feature: Permissions API
     # Cleanup: Delete group
     Given the following request
     """
-    DELETE /api/groups/{{GROUP_ID}} HTTP/1.1
+    DELETE /api/v1/groups/{{GROUP_ID}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -576,7 +576,7 @@ Feature: Permissions API
     # Create a restricted group
     Given the following request
     """
-    POST /api/groups HTTP/1.1
+    POST /api/v1/groups HTTP/1.1
     Content-Type: application/json
 
     {
@@ -597,7 +597,7 @@ Feature: Permissions API
     # This should override the default "read": true
     Given the following request
     """
-    POST /api/groups/{{GROUP_ID}}/permissions HTTP/1.1
+    POST /api/v1/groups/{{GROUP_ID}}/permissions HTTP/1.1
     Content-Type: application/json
 
     {
@@ -614,7 +614,7 @@ Feature: Permissions API
     # Create user in the restricted group
     Given the following request
     """
-    POST /api/users HTTP/1.1
+    POST /api/v1/users HTTP/1.1
     Content-Type: application/json
 
     {
@@ -632,7 +632,7 @@ Feature: Permissions API
     # User should have "read": false instead of the default "read": true
     Given the following request
     """
-    GET /api/permissions/user/{{USER_EMAIL}} HTTP/1.1
+    GET /api/v1/permissions/user/{{USER_EMAIL}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -651,7 +651,7 @@ Feature: Permissions API
     # Cleanup: Delete user
     Given the following request
     """
-    DELETE /api/users/{{USER_EMAIL}} HTTP/1.1
+    DELETE /api/v1/users/{{USER_EMAIL}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -662,7 +662,7 @@ Feature: Permissions API
     # Cleanup: Delete group
     Given the following request
     """
-    DELETE /api/groups/{{GROUP_ID}} HTTP/1.1
+    DELETE /api/v1/groups/{{GROUP_ID}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -688,7 +688,7 @@ Feature: Permissions API
     # Create a group
     Given the following request
     """
-    POST /api/groups HTTP/1.1
+    POST /api/v1/groups HTTP/1.1
     Content-Type: application/json
 
     {
@@ -708,7 +708,7 @@ Feature: Permissions API
     # Group denies "delete" permission
     Given the following request
     """
-    POST /api/groups/{{GROUP_ID}}/permissions HTTP/1.1
+    POST /api/v1/groups/{{GROUP_ID}}/permissions HTTP/1.1
     Content-Type: application/json
 
     {
@@ -725,7 +725,7 @@ Feature: Permissions API
     # Create user in the group (will inherit the DENY)
     Given the following request
     """
-    POST /api/users HTTP/1.1
+    POST /api/v1/users HTTP/1.1
     Content-Type: application/json
 
     {
@@ -743,7 +743,7 @@ Feature: Permissions API
     # This should override the group's DENY
     Given the following request
     """
-    POST /api/users/{{USER_EMAIL}}/permissions HTTP/1.1
+    POST /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
     Content-Type: application/json
 
     {
@@ -761,7 +761,7 @@ Feature: Permissions API
     # User should have "delete": true despite group having "delete": DENY
     Given the following request
     """
-    GET /api/permissions/user/{{USER_EMAIL}} HTTP/1.1
+    GET /api/v1/permissions/user/{{USER_EMAIL}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -781,7 +781,7 @@ Feature: Permissions API
     # Cleanup: Delete user
     Given the following request
     """
-    DELETE /api/users/{{USER_EMAIL}} HTTP/1.1
+    DELETE /api/v1/users/{{USER_EMAIL}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -792,7 +792,7 @@ Feature: Permissions API
     # Cleanup: Delete group
     Given the following request
     """
-    DELETE /api/groups/{{GROUP_ID}} HTTP/1.1
+    DELETE /api/v1/groups/{{GROUP_ID}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -818,7 +818,7 @@ Feature: Permissions API
     # Create "editors" group
     Given the following request
     """
-    POST /api/groups HTTP/1.1
+    POST /api/v1/groups HTTP/1.1
     Content-Type: application/json
 
     {
@@ -838,7 +838,7 @@ Feature: Permissions API
     # Create "admins" group
     Given the following request
     """
-    POST /api/groups HTTP/1.1
+    POST /api/v1/groups HTTP/1.1
     Content-Type: application/json
 
     {
@@ -858,7 +858,7 @@ Feature: Permissions API
     # Grant "write" permission to editors group
     Given the following request
     """
-    POST /api/groups/{{EDITORS_GROUP_ID}}/permissions HTTP/1.1
+    POST /api/v1/groups/{{EDITORS_GROUP_ID}}/permissions HTTP/1.1
     Content-Type: application/json
 
     {
@@ -875,7 +875,7 @@ Feature: Permissions API
     # Grant "delete" permission to admins group
     Given the following request
     """
-    POST /api/groups/{{ADMINS_GROUP_ID}}/permissions HTTP/1.1
+    POST /api/v1/groups/{{ADMINS_GROUP_ID}}/permissions HTTP/1.1
     Content-Type: application/json
 
     {
@@ -892,7 +892,7 @@ Feature: Permissions API
     # Create user belonging to both groups
     Given the following request
     """
-    POST /api/users HTTP/1.1
+    POST /api/v1/users HTTP/1.1
     Content-Type: application/json
 
     {
@@ -910,7 +910,7 @@ Feature: Permissions API
     # Should have: "read" (default), "write" (from editors), "delete" (from admins)
     Given the following request
     """
-    GET /api/permissions/user/{{USER_EMAIL}} HTTP/1.1
+    GET /api/v1/permissions/user/{{USER_EMAIL}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -931,7 +931,7 @@ Feature: Permissions API
     # Cleanup: Delete user
     Given the following request
     """
-    DELETE /api/users/{{USER_EMAIL}} HTTP/1.1
+    DELETE /api/v1/users/{{USER_EMAIL}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -942,7 +942,7 @@ Feature: Permissions API
     # Cleanup: Delete editors group
     Given the following request
     """
-    DELETE /api/groups/{{EDITORS_GROUP_ID}} HTTP/1.1
+    DELETE /api/v1/groups/{{EDITORS_GROUP_ID}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -953,7 +953,7 @@ Feature: Permissions API
     # Cleanup: Delete admins group
     Given the following request
     """
-    DELETE /api/groups/{{ADMINS_GROUP_ID}} HTTP/1.1
+    DELETE /api/v1/groups/{{ADMINS_GROUP_ID}} HTTP/1.1
     """
 
     Then the API returns the following response
