@@ -16,7 +16,7 @@ public record Group
 public record User
 {
     public required string Email { get; init; }
-    public List<string> Groups { get; init; } = new();
+    public List<string> Groups { get; init; } = [];
     public Dictionary<string, string> Permissions { get; init; } = new();
 }
 
@@ -34,7 +34,7 @@ public record CreateGroupRequest
 public record CreateUserRequest
 {
     public required string Email { get; init; }
-    public List<string> Groups { get; init; } = new();
+    public List<string> Groups { get; init; } = [];
 }
 
 public record PermissionsResponse
