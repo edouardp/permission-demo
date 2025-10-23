@@ -8,59 +8,59 @@ namespace PermissionsApi.Controllers;
 [Route("api")]
 public class PermissionsController : ControllerBase
 {
-    private readonly DataStore _dataStore;
+    private readonly PermissionsRepository _repository;
 
-    public PermissionsController(DataStore dataStore)
+    public PermissionsController(PermissionsRepository repository)
     {
-        _dataStore = dataStore;
+        _repository = repository;
     }
 
     [HttpGet("permissions/{email}")]
     public IActionResult GetPermissions(string email)
     {
-        var permissions = _dataStore.CalculatePermissions(email);
+        var permissions = _repository.CalculatePermissions(email);
         return Ok(new PermissionsResponse { Email = email, Permissions = permissions });
     }
 
     [HttpPost("groups")]
     public IActionResult CreateGroup([FromBody] CreateGroupRequest request)
     {
-        var group = _dataStore.CreateGroup(request.Name);
+        var group = _repository.CreateGroup(request.Name);
         return CreatedAtAction(nameof(CreateGroup), new { id = group.Id, name = group.Name });
     }
 
     [HttpPost("groups/{groupId}/permissions")]
     public IActionResult SetGroupPermission(string groupId, [FromBody] PermissionRequest request)
     {
-        _dataStore.SetGroupPermission(groupId, request.Permission, request.Access);
+        _repository.SetGroupPermission(groupId, request.Permission, request.Access);
         return Ok();
     }
 
     [HttpPost("users")]
     public IActionResult CreateUser([FromBody] CreateUserRequest request)
     {
-        _dataStore.CreateUser(request.Email, request.Groups);
+        _repository.CreateUser(request.Email, request.Groups);
         return CreatedAtAction(nameof(CreateUser), null);
     }
 
     [HttpPost("users/{email}/permissions")]
     public IActionResult SetUserPermission(string email, [FromBody] PermissionRequest request)
     {
-        _dataStore.SetUserPermission(email, request.Permission, request.Access);
+        _repository.SetUserPermission(email, request.Permission, request.Access);
         return Ok();
     }
 
     [HttpDelete("users/{email}")]
     public IActionResult DeleteUser(string email)
     {
-        _dataStore.DeleteUser(email);
+        _repository.DeleteUser(email);
         return NoContent();
     }
 
     [HttpDelete("groups/{groupId}")]
     public IActionResult DeleteGroup(string groupId)
     {
-        _dataStore.DeleteGroup(groupId);
+        _repository.DeleteGroup(groupId);
         return NoContent();
     }
 }

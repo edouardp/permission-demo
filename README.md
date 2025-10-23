@@ -80,7 +80,7 @@ permissions2/
 │   └── PermissionsApi/
 │       ├── Controllers/       # API controllers
 │       ├── Models/           # Data models
-│       ├── Services/         # Business logic (DataStore)
+│       ├── Services/         # Business logic (PermissionsRepository)
 │       └── Program.cs        # Application entry point
 ├── test/
 │   └── PermissionsAPI.ReqNRoll/

@@ -2,7 +2,7 @@ using PermissionsApi.Models;
 
 namespace PermissionsApi.Services;
 
-public class DataStore
+public class PermissionsRepository
 {
     private readonly Dictionary<string, Group> _groups = new();
     private readonly Dictionary<string, User> _users = new();

@@ -11,7 +11,7 @@ namespace PermissionsApi
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            builder.Services.AddSingleton<DataStore>();
+            builder.Services.AddSingleton<PermissionsRepository>();
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
