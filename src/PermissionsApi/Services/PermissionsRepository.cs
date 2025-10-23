@@ -1,12 +1,13 @@
+using System.Collections.Concurrent;
 using PermissionsApi.Models;
 
 namespace PermissionsApi.Services;
 
 public class PermissionsRepository
 {
-    private readonly Dictionary<string, Permission> _permissions = new();
-    private readonly Dictionary<string, Group> _groups = new();
-    private readonly Dictionary<string, User> _users = new();
+    private readonly ConcurrentDictionary<string, Permission> _permissions = new();
+    private readonly ConcurrentDictionary<string, Group> _groups = new();
+    private readonly ConcurrentDictionary<string, User> _users = new();
     private readonly Dictionary<string, bool> _defaultPermissions = new() { { "read", true } };
 
     public Permission CreatePermission(string name, string description)
@@ -39,7 +40,7 @@ public class PermissionsRepository
 
     public bool DeletePermission(string name)
     {
-        return _permissions.Remove(name);
+        return _permissions.TryRemove(name, out _);
     }
 
     public Group CreateGroup(string name)
@@ -78,18 +79,20 @@ public class PermissionsRepository
 
         if (_users.TryGetValue(email, out var user))
         {
-            foreach (var groupId in user.Groups)
+            var userGroups = user.Groups.ToList();
+            
+            foreach (var groupId in userGroups)
             {
                 if (_groups.TryGetValue(groupId, out var group))
                 {
-                    foreach (var perm in group.Permissions)
+                    foreach (var perm in group.Permissions.ToList())
                     {
                         result[perm.Key] = perm.Value == "ALLOW";
                     }
                 }
             }
 
-            foreach (var perm in user.Permissions)
+            foreach (var perm in user.Permissions.ToList())
             {
                 result[perm.Key] = perm.Value == "ALLOW";
             }
@@ -100,11 +103,11 @@ public class PermissionsRepository
 
     public void DeleteUser(string email)
     {
-        _users.Remove(email);
+        _users.TryRemove(email, out _);
     }
 
     public void DeleteGroup(string groupId)
     {
-        _groups.Remove(groupId);
+        _groups.TryRemove(groupId, out _);
     }
 }
