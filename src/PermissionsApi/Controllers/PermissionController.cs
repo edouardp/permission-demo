@@ -7,10 +7,10 @@ namespace PermissionsApi.Controllers;
 [ApiController]
 [Route("api/v1")]
 #pragma warning disable S6960 // Controller responsibilities are appropriate for this API size
-public class PermissionsController(
+public class PermissionController(
     IPermissionsRepository repository,
     IHistoryService historyService,
-    ILogger<PermissionsController> logger)
+    ILogger<PermissionController> logger)
     : ControllerBase
 {
     /// <summary>
