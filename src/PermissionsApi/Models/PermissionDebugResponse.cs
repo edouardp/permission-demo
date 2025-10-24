@@ -1,21 +1,21 @@
 namespace PermissionsApi.Models;
 
-public class PermissionDebugResponse
+public record PermissionDebugResponse
 {
-    public string Email { get; set; } = string.Empty;
-    public List<PermissionDebugItem> Permissions { get; set; } = new();
+    public required string Email { get; init; }
+    public List<PermissionDebugItem> Permissions { get; init; } = [];
 }
 
-public class PermissionDebugItem
+public record PermissionDebugItem
 {
-    public string Permission { get; set; } = string.Empty;
-    public string FinalResult { get; set; } = string.Empty; // "ALLOW" or "DENY"
-    public List<PermissionDebugStep> Chain { get; set; } = new();
+    public required string Permission { get; init; }
+    public required string FinalResult { get; init; } // "ALLOW" or "DENY"
+    public List<PermissionDebugStep> Chain { get; init; } = [];
 }
 
-public class PermissionDebugStep
+public record PermissionDebugStep
 {
-    public string Level { get; set; } = string.Empty; // "Default", "Group", "User"
-    public string Source { get; set; } = string.Empty; // group name or "default" or user email
-    public string Action { get; set; } = string.Empty; // "ALLOW", "DENY", or "NONE"
+    public required string Level { get; init; } // "Default", "Group", "User"
+    public required string Source { get; init; } // group name or "default" or user email
+    public required string Action { get; init; } // "ALLOW", "DENY", or "NONE"
 }
