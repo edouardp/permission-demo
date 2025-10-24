@@ -102,10 +102,36 @@ public class PermissionsController : ControllerBase
     }
 
     [HttpPost("groups/{groupId}/permissions")]
-    public async Task<IActionResult> SetGroupPermission(string groupId, [FromBody] PermissionRequest request, CancellationToken ct)
+    public async Task<IActionResult> SetGroupPermission(string groupId, [FromBody] BatchPermissionRequest request, CancellationToken ct)
     {
-        _logger.LogInformation("Setting group {GroupId} permission {Permission} to {Access}", groupId, request.Permission, request.Access);
-        await _repository.SetGroupPermissionAsync(groupId, request.Permission, request.Access, ct);
+        // Validate all permissions exist
+        var invalidPermissions = new List<string>();
+        foreach (var permissionRequest in request.Permissions)
+        {
+            var permission = await _repository.GetPermissionAsync(permissionRequest.Permission, ct);
+            if (permission == null)
+            {
+                invalidPermissions.Add(permissionRequest.Permission);
+            }
+        }
+
+        if (invalidPermissions.Count > 0)
+        {
+            _logger.LogWarning("Invalid permissions for group {GroupId}: {InvalidPermissions}", groupId, string.Join(", ", invalidPermissions));
+            return Problem(
+                title: "Invalid Permissions",
+                detail: $"The following permissions do not exist: {string.Join(", ", invalidPermissions)}",
+                statusCode: 400
+            );
+        }
+
+        // Set all permissions
+        foreach (var permissionRequest in request.Permissions)
+        {
+            await _repository.SetGroupPermissionAsync(groupId, permissionRequest.Permission, permissionRequest.Access, ct);
+        }
+
+        _logger.LogInformation("Set {Count} permissions for group {GroupId}", request.Permissions.Count, groupId);
         return Ok();
     }
 
@@ -118,10 +144,36 @@ public class PermissionsController : ControllerBase
     }
 
     [HttpPost("users/{email}/permissions")]
-    public async Task<IActionResult> SetUserPermission(string email, [FromBody] PermissionRequest request, CancellationToken ct)
+    public async Task<IActionResult> SetUserPermission(string email, [FromBody] BatchPermissionRequest request, CancellationToken ct)
     {
-        _logger.LogInformation("Setting user {Email} permission {Permission} to {Access}", email, request.Permission, request.Access);
-        await _repository.SetUserPermissionAsync(email, request.Permission, request.Access, ct);
+        // Validate all permissions exist
+        var invalidPermissions = new List<string>();
+        foreach (var permissionRequest in request.Permissions)
+        {
+            var permission = await _repository.GetPermissionAsync(permissionRequest.Permission, ct);
+            if (permission == null)
+            {
+                invalidPermissions.Add(permissionRequest.Permission);
+            }
+        }
+
+        if (invalidPermissions.Count > 0)
+        {
+            _logger.LogWarning("Invalid permissions for user {Email}: {InvalidPermissions}", email, string.Join(", ", invalidPermissions));
+            return Problem(
+                title: "Invalid Permissions",
+                detail: $"The following permissions do not exist: {string.Join(", ", invalidPermissions)}",
+                statusCode: 400
+            );
+        }
+
+        // Set all permissions
+        foreach (var permissionRequest in request.Permissions)
+        {
+            await _repository.SetUserPermissionAsync(email, permissionRequest.Permission, permissionRequest.Access, ct);
+        }
+
+        _logger.LogInformation("Set {Count} permissions for user {Email}", request.Permissions.Count, email);
         return Ok();
     }
 

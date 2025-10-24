@@ -64,8 +64,12 @@ Feature: Groups
     Content-Type: application/json
 
     {
-      "permission": "read",
-      "access": "DENY"
+      "permissions": [
+        {
+          "permission": "read",
+          "access": "DENY"
+        }
+      ]
     }
     """
 
@@ -120,6 +124,71 @@ Feature: Groups
     Then the API returns the following response
     """
     HTTP/1.1 204 NoContent
+    """
+
+    # Cleanup: Delete group
+    Given the following request
+    """
+    DELETE /api/v1/groups/{{GROUP_ID}} HTTP/1.1
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 204 NoContent
+    """
+  Scenario: Setting non-existent permission on group returns error
+    # WHEN attempting to set a permission that doesn't exist on a group
+    # THEN the system SHALL return an error response
+    
+    Given the variable 'GROUP_NAME' is set to 'test-group-{{GUID()}}'
+
+    # Create a group
+    Given the following request
+    """
+    POST /api/v1/groups HTTP/1.1
+    Content-Type: application/json
+
+    {
+      "name": "{{GROUP_NAME}}"
+    }
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 201 Created
+
+    {
+      "id": [[GROUP_ID]]
+    }
+    """
+
+    # Attempt to set a non-existent permission
+    Given the following request
+    """
+    POST /api/v1/groups/{{GROUP_ID}}/permissions HTTP/1.1
+    Content-Type: application/json
+
+    {
+      "permissions": [
+        {
+          "permission": "nonexistent-permission",
+          "access": "ALLOW"
+        }
+      ]
+    }
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 400 BadRequest
+    Content-Type: application/problem+json
+
+    {
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+      "title": "Invalid Permissions",
+      "status": 400,
+      "detail": "The following permissions do not exist: nonexistent-permission"
+    }
     """
 
     # Cleanup: Delete group

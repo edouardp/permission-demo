@@ -27,6 +27,11 @@ public record PermissionRequest
     public required string Access { get; init; }
 }
 
+public record BatchPermissionRequest
+{
+    public required List<PermissionRequest> Permissions { get; init; } = [];
+}
+
 public record CreateGroupRequest
 {
     public required string Name { get; init; }

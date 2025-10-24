@@ -24,6 +24,76 @@ Feature: Users
     }
     """
 
+    # Create additional permissions that tests will reference
+    Given the following request
+    """
+    POST /api/v1/permissions HTTP/1.1
+    Content-Type: application/json
+
+    {
+      "name": "write",
+      "description": "Write permission",
+      "isDefault": false
+    }
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 201 Created
+    Content-Type: application/json
+
+    {
+      "name": "write",
+      "isDefault": false
+    }
+    """
+
+    Given the following request
+    """
+    POST /api/v1/permissions HTTP/1.1
+    Content-Type: application/json
+
+    {
+      "name": "delete",
+      "description": "Delete permission",
+      "isDefault": false
+    }
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 201 Created
+    Content-Type: application/json
+
+    {
+      "name": "delete",
+      "isDefault": false
+    }
+    """
+
+    Given the following request
+    """
+    POST /api/v1/permissions HTTP/1.1
+    Content-Type: application/json
+
+    {
+      "name": "execute",
+      "description": "Execute permission",
+      "isDefault": false
+    }
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 201 Created
+    Content-Type: application/json
+
+    {
+      "name": "execute",
+      "isDefault": false
+    }
+    """
+
   Scenario: User-level ALLOW permission without groups
     # WHEN a user is created without group membership
     # AND the user is granted ALLOW for a specific permission
@@ -55,8 +125,12 @@ Feature: Users
     Content-Type: application/json
 
     {
-      "permission": "write",
-      "access": "ALLOW"
+      "permissions": [
+        {
+          "permission": "write",
+          "access": "ALLOW"
+        }
+      ]
     }
     """
 
@@ -128,8 +202,12 @@ Feature: Users
     Content-Type: application/json
 
     {
-      "permission": "read",
-      "access": "DENY"
+      "permissions": [
+        {
+          "permission": "read",
+          "access": "DENY"
+        }
+      ]
     }
     """
 
@@ -193,49 +271,27 @@ Feature: Users
     HTTP/1.1 201 Created
     """
 
-    # ALLOW write permission
+    # Set multiple permissions in one request
     Given the following request
     """
     POST /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
     Content-Type: application/json
 
     {
-      "permission": "write",
-      "access": "ALLOW"
-    }
-    """
-
-    Then the API returns the following response
-    """
-    HTTP/1.1 200 OK
-    """
-
-    # ALLOW delete permission
-    Given the following request
-    """
-    POST /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
-    Content-Type: application/json
-
-    {
-      "permission": "delete",
-      "access": "ALLOW"
-    }
-    """
-
-    Then the API returns the following response
-    """
-    HTTP/1.1 200 OK
-    """
-
-    # DENY execute permission
-    Given the following request
-    """
-    POST /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
-    Content-Type: application/json
-
-    {
-      "permission": "execute",
-      "access": "DENY"
+      "permissions": [
+        {
+          "permission": "write",
+          "access": "ALLOW"
+        },
+        {
+          "permission": "delete",
+          "access": "ALLOW"
+        },
+        {
+          "permission": "execute",
+          "access": "DENY"
+        }
+      ]
     }
     """
 
@@ -299,4 +355,140 @@ Feature: Users
       "title": "Not Found",
       "status": 404
     }
+    """
+  Scenario: Setting non-existent permission on user returns error
+    # WHEN attempting to set a permission that doesn't exist on a user
+    # THEN the system SHALL return an error response
+    
+    Given the variable 'USER_EMAIL' is set to 'test-user-{{GUID()}}@example.com'
+
+    # Create a user
+    Given the following request
+    """
+    POST /api/v1/users HTTP/1.1
+    Content-Type: application/json
+
+    {
+      "email": "{{USER_EMAIL}}",
+      "groups": []
+    }
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 201 Created
+    """
+
+    # Attempt to set a non-existent permission
+    Given the following request
+    """
+    POST /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
+    Content-Type: application/json
+
+    {
+      "permissions": [
+        {
+          "permission": "nonexistent-permission",
+          "access": "ALLOW"
+        }
+      ]
+    }
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 400 BadRequest
+    Content-Type: application/problem+json
+
+    {
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+      "title": "Invalid Permissions",
+      "status": 400,
+      "detail": "The following permissions do not exist: nonexistent-permission"
+    }
+    """
+
+    # Cleanup: Delete user
+    Given the following request
+    """
+    DELETE /api/v1/users/{{USER_EMAIL}} HTTP/1.1
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 204 NoContent
+    """
+  Scenario: Setting multiple non-existent permissions returns comprehensive error
+    # WHEN attempting to set multiple permissions where some don't exist
+    # THEN the system SHALL return all invalid permissions in the error
+    
+    Given the variable 'USER_EMAIL' is set to 'test-user-{{GUID()}}@example.com'
+
+    # Create a user
+    Given the following request
+    """
+    POST /api/v1/users HTTP/1.1
+    Content-Type: application/json
+
+    {
+      "email": "{{USER_EMAIL}}",
+      "groups": []
+    }
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 201 Created
+    """
+
+    # Attempt to set multiple permissions, some valid, some invalid
+    Given the following request
+    """
+    POST /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
+    Content-Type: application/json
+
+    {
+      "permissions": [
+        {
+          "permission": "write",
+          "access": "ALLOW"
+        },
+        {
+          "permission": "invalid-perm-1",
+          "access": "ALLOW"
+        },
+        {
+          "permission": "delete",
+          "access": "DENY"
+        },
+        {
+          "permission": "invalid-perm-2",
+          "access": "ALLOW"
+        }
+      ]
+    }
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 400 BadRequest
+    Content-Type: application/problem+json
+
+    {
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+      "title": "Invalid Permissions",
+      "status": 400,
+      "detail": "The following permissions do not exist: invalid-perm-1, invalid-perm-2"
+    }
+    """
+
+    # Cleanup: Delete user
+    Given the following request
+    """
+    DELETE /api/v1/users/{{USER_EMAIL}} HTTP/1.1
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 204 NoContent
     """
