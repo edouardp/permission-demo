@@ -1,28 +1,20 @@
 using System.Collections.Concurrent;
-using Microsoft.Extensions.Logging;
 using PermissionsApi.Models;
 
 namespace PermissionsApi.Services;
 
-public class PermissionsRepository : IPermissionsRepository
+public class PermissionsRepository(ILogger<PermissionsRepository> logger, IHistoryService historyService)
+    : IPermissionsRepository
 {
-    private readonly ConcurrentDictionary<string, Permission> _permissions = new();
-    private readonly ConcurrentDictionary<string, Group> _groups = new();
-    private readonly ConcurrentDictionary<string, User> _users = new();
-    private readonly ILogger<PermissionsRepository> _logger;
-    private readonly IHistoryService _historyService;
-
-    public PermissionsRepository(ILogger<PermissionsRepository> logger, IHistoryService historyService)
-    {
-        _logger = logger;
-        _historyService = historyService;
-    }
+    private readonly ConcurrentDictionary<string, Permission> permissions = new();
+    private readonly ConcurrentDictionary<string, Group> groups = new();
+    private readonly ConcurrentDictionary<string, User> users = new();
 
     private Dictionary<string, bool> GetDefaultPermissions()
     {
         var defaults = new Dictionary<string, bool>();
         
-        foreach (var permission in _permissions.Values.Where(p => p.IsDefault))
+        foreach (var permission in permissions.Values.Where(p => p.IsDefault))
         {
             defaults[permission.Name] = true;
         }
@@ -33,31 +25,31 @@ public class PermissionsRepository : IPermissionsRepository
     public async Task<Permission> CreatePermissionAsync(string name, string description, bool isDefault, CancellationToken ct)
     {
         var permission = new Permission { Name = name, Description = description, IsDefault = isDefault };
-        _permissions[name] = permission;
-        await _historyService.RecordChangeAsync("CREATE", "Permission", name, permission);
-        _logger.LogInformation("Created permission {PermissionName} (IsDefault: {IsDefault})", name, isDefault);
+        permissions[name] = permission;
+        await historyService.RecordChangeAsync("CREATE", "Permission", name, permission);
+        logger.LogInformation("Created permission {PermissionName} (IsDefault: {IsDefault})", name, isDefault);
         return permission;
     }
 
     public Task<Permission?> GetPermissionAsync(string name, CancellationToken ct)
     {
-        _permissions.TryGetValue(name, out var permission);
+        permissions.TryGetValue(name, out var permission);
         return Task.FromResult(permission);
     }
 
     public Task<List<Permission>> GetAllPermissionsAsync(CancellationToken ct)
     {
-        return Task.FromResult(_permissions.Values.ToList());
+        return Task.FromResult(permissions.Values.ToList());
     }
 
     public async Task<bool> UpdatePermissionAsync(string name, string description, CancellationToken ct)
     {
-        if (_permissions.TryGetValue(name, out var permission))
+        if (permissions.TryGetValue(name, out var permission))
         {
             var updatedPermission = permission with { Description = description };
-            _permissions[name] = updatedPermission;
-            await _historyService.RecordChangeAsync("UPDATE", "Permission", name, updatedPermission);
-            _logger.LogInformation("Updated permission {PermissionName}", name);
+            permissions[name] = updatedPermission;
+            await historyService.RecordChangeAsync("UPDATE", "Permission", name, updatedPermission);
+            logger.LogInformation("Updated permission {PermissionName}", name);
             return true;
         }
         return false;
@@ -65,21 +57,21 @@ public class PermissionsRepository : IPermissionsRepository
 
     public async Task<bool> DeletePermissionAsync(string name, CancellationToken ct)
     {
-        var result = _permissions.TryRemove(name, out var permission);
+        var result = permissions.TryRemove(name, out var permission);
         if (result && permission != null)
         {
-            await _historyService.RecordChangeAsync("DELETE", "Permission", name, permission);
-            _logger.LogInformation("Deleted permission {PermissionName}", name);
+            await historyService.RecordChangeAsync("DELETE", "Permission", name, permission);
+            logger.LogInformation("Deleted permission {PermissionName}", name);
         }
         return result;
     }
 
     public Task<bool> SetPermissionDefaultAsync(string name, bool isDefault, CancellationToken ct)
     {
-        if (_permissions.TryGetValue(name, out var permission))
+        if (permissions.TryGetValue(name, out var permission))
         {
-            _permissions[name] = permission with { IsDefault = isDefault };
-            _logger.LogInformation("Set permission {PermissionName} IsDefault to {IsDefault}", name, isDefault);
+            permissions[name] = permission with { IsDefault = isDefault };
+            logger.LogInformation("Set permission {PermissionName} IsDefault to {IsDefault}", name, isDefault);
             return Task.FromResult(true);
         }
         return Task.FromResult(false);
@@ -88,94 +80,94 @@ public class PermissionsRepository : IPermissionsRepository
     public async Task<Group> CreateGroupAsync(string name, CancellationToken ct)
     {
         var group = new Group { Id = Guid.NewGuid().ToString(), Name = name };
-        _groups[group.Id] = group;
-        await _historyService.RecordChangeAsync("CREATE", "Group", group.Id, group);
-        _logger.LogInformation("Created group {GroupId} with name {GroupName}", group.Id, name);
+        groups[group.Id] = group;
+        await historyService.RecordChangeAsync("CREATE", "Group", group.Id, group);
+        logger.LogInformation("Created group {GroupId} with name {GroupName}", group.Id, name);
         return group;
     }
 
     public Task SetGroupPermissionAsync(string groupId, string permission, string access, CancellationToken ct)
     {
-        if (_groups.TryGetValue(groupId, out var group))
+        if (groups.TryGetValue(groupId, out var group))
         {
             group.Permissions[permission] = access;
-            _logger.LogInformation("Set group {GroupId} permission {Permission} to {Access}", groupId, permission, access);
+            logger.LogInformation("Set group {GroupId} permission {Permission} to {Access}", groupId, permission, access);
         }
         return Task.CompletedTask;
     }
 
-    public Task ReplaceGroupPermissionsAsync(string groupId, List<PermissionRequest> permissions, CancellationToken ct)
+    public Task ReplaceGroupPermissionsAsync(string groupId, List<PermissionRequest> permissionRequest, CancellationToken ct)
     {
-        if (_groups.TryGetValue(groupId, out var group))
+        if (groups.TryGetValue(groupId, out var group))
         {
             group.Permissions.Clear();
-            foreach (var permission in permissions)
+            foreach (var permission in permissionRequest)
             {
                 group.Permissions[permission.Permission] = permission.Access;
             }
-            _logger.LogInformation("Replaced group {GroupId} permissions with {Count} permissions", groupId, permissions.Count);
+            logger.LogInformation("Replaced group {GroupId} permissions with {Count} permissions", groupId, permissionRequest.Count);
         }
         return Task.CompletedTask;
     }
 
     public Task RemoveGroupPermissionAsync(string groupId, string permission, CancellationToken ct)
     {
-        if (_groups.TryGetValue(groupId, out var group))
+        if (groups.TryGetValue(groupId, out var group))
         {
             group.Permissions.Remove(permission);
-            _logger.LogInformation("Removed group {GroupId} permission {Permission}", groupId, permission);
+            logger.LogInformation("Removed group {GroupId} permission {Permission}", groupId, permission);
         }
         return Task.CompletedTask;
     }
 
-    public async Task<User> CreateUserAsync(string email, List<string> groups, CancellationToken ct)
+    public async Task<User> CreateUserAsync(string email, List<string> groupList, CancellationToken ct)
     {
-        var user = new User { Email = email, Groups = groups };
-        _users[email] = user;
-        await _historyService.RecordChangeAsync("CREATE", "User", email, user);
-        _logger.LogInformation("Created user {Email} with {GroupCount} groups", email, groups.Count);
+        var user = new User { Email = email, Groups = groupList };
+        users[email] = user;
+        await historyService.RecordChangeAsync("CREATE", "User", email, user);
+        logger.LogInformation("Created user {Email} with {GroupCount} groups", email, groupList.Count);
         return user;
     }
 
     public Task SetUserPermissionAsync(string email, string permission, string access, CancellationToken ct)
     {
-        if (_users.TryGetValue(email, out var user))
+        if (users.TryGetValue(email, out var user))
         {
             user.Permissions[permission] = access;
-            _logger.LogInformation("Set user {Email} permission {Permission} to {Access}", email, permission, access);
+            logger.LogInformation("Set user {Email} permission {Permission} to {Access}", email, permission, access);
         }
         return Task.CompletedTask;
     }
 
-    public Task ReplaceUserPermissionsAsync(string email, List<PermissionRequest> permissions, CancellationToken ct)
+    public Task ReplaceUserPermissionsAsync(string email, List<PermissionRequest> permissionList, CancellationToken ct)
     {
-        if (_users.TryGetValue(email, out var user))
+        if (users.TryGetValue(email, out var user))
         {
             user.Permissions.Clear();
-            foreach (var permission in permissions)
+            foreach (var permission in permissionList)
             {
                 user.Permissions[permission.Permission] = permission.Access;
             }
-            _logger.LogInformation("Replaced user {Email} permissions with {Count} permissions", email, permissions.Count);
+            logger.LogInformation("Replaced user {Email} permissions with {Count} permissions", email, permissionList.Count);
         }
         return Task.CompletedTask;
     }
 
     public Task RemoveUserPermissionAsync(string email, string permission, CancellationToken ct)
     {
-        if (_users.TryGetValue(email, out var user))
+        if (users.TryGetValue(email, out var user))
         {
             user.Permissions.Remove(permission);
-            _logger.LogInformation("Removed user {Email} permission {Permission}", email, permission);
+            logger.LogInformation("Removed user {Email} permission {Permission}", email, permission);
         }
         return Task.CompletedTask;
     }
 
     public Task<Dictionary<string, bool>?> CalculatePermissionsAsync(string email, CancellationToken ct)
     {
-        if (!_users.TryGetValue(email, out var user))
+        if (!users.TryGetValue(email, out var user))
         {
-            _logger.LogDebug("User {Email} not found", email);
+            logger.LogDebug("User {Email} not found", email);
             return Task.FromResult<Dictionary<string, bool>?>(null);
         }
 
@@ -184,7 +176,7 @@ public class PermissionsRepository : IPermissionsRepository
         
         foreach (var groupId in userGroups)
         {
-            if (_groups.TryGetValue(groupId, out var group))
+            if (groups.TryGetValue(groupId, out var group))
             {
                 foreach (var perm in group.Permissions.ToList())
                 {
@@ -198,13 +190,13 @@ public class PermissionsRepository : IPermissionsRepository
             result[perm.Key] = perm.Value == "ALLOW";
         }
         
-        _logger.LogDebug("Calculated {PermissionCount} permissions for user {Email}", result.Count, email);
+        logger.LogDebug("Calculated {PermissionCount} permissions for user {Email}", result.Count, email);
         return Task.FromResult<Dictionary<string, bool>?>(result);
     }
 
     public Task<PermissionDebugResponse?> CalculatePermissionsDebugAsync(string email, CancellationToken ct)
     {
-        if (!_users.TryGetValue(email, out var user))
+        if (!users.TryGetValue(email, out var user))
         {
             return Task.FromResult<PermissionDebugResponse?>(null);
         }
@@ -215,7 +207,7 @@ public class PermissionsRepository : IPermissionsRepository
         
         foreach (var groupId in user.Groups)
         {
-            if (_groups.TryGetValue(groupId, out var group))
+            if (groups.TryGetValue(groupId, out var group))
             {
                 allPermissions.UnionWith(group.Permissions.Keys);
             }
@@ -227,7 +219,7 @@ public class PermissionsRepository : IPermissionsRepository
         foreach (var permission in allPermissions.OrderBy(p => p))
         {
             var chain = new List<PermissionDebugStep>();
-            bool finalResult = false;
+            var finalResult = false;
 
             // Default level
             if (defaultPerms.TryGetValue(permission, out var defaultValue))
@@ -253,7 +245,7 @@ public class PermissionsRepository : IPermissionsRepository
             // Group level
             foreach (var groupId in user.Groups)
             {
-                if (_groups.TryGetValue(groupId, out var group) && group.Permissions.TryGetValue(permission, out var groupAccess))
+                if (groups.TryGetValue(groupId, out var group) && group.Permissions.TryGetValue(permission, out var groupAccess))
                 {
                     chain.Add(new PermissionDebugStep
                     {
@@ -296,17 +288,17 @@ public class PermissionsRepository : IPermissionsRepository
 
     public Task DeleteUserAsync(string email, CancellationToken ct)
     {
-        var result = _users.TryRemove(email, out _);
+        var result = users.TryRemove(email, out _);
         if (result)
-            _logger.LogInformation("Deleted user {Email}", email);
+            logger.LogInformation("Deleted user {Email}", email);
         return Task.CompletedTask;
     }
 
     public Task DeleteGroupAsync(string groupId, CancellationToken ct)
     {
-        var result = _groups.TryRemove(groupId, out _);
+        var result = groups.TryRemove(groupId, out _);
         if (result)
-            _logger.LogInformation("Deleted group {GroupId}", groupId);
+            logger.LogInformation("Deleted group {GroupId}", groupId);
         return Task.CompletedTask;
     }
 }

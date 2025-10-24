@@ -2,32 +2,26 @@ using PermissionsApi.Models;
 
 namespace PermissionsApi.Services;
 
-public class HistoryService : IHistoryService
+public class HistoryService(TimeProvider timeProvider) : IHistoryService
 {
-    private readonly TimeProvider _timeProvider;
-    private readonly List<HistoryEntry> _history = new();
-
-    public HistoryService(TimeProvider timeProvider)
-    {
-        _timeProvider = timeProvider;
-    }
+    private readonly List<HistoryEntry> history = [];
 
     public Task RecordChangeAsync(string changeType, string entityType, string entityId, object entityAfterChange)
     {
         var entry = new HistoryEntry(
-            _timeProvider.GetUtcNow().DateTime,
+            timeProvider.GetUtcNow().DateTime,
             changeType,
             entityType,
             entityId,
             entityAfterChange);
 
-        _history.Add(entry);
+        history.Add(entry);
         return Task.CompletedTask;
     }
 
     public Task<List<HistoryEntry>> GetHistoryAsync(int? skip = null, int? count = null)
     {
-        IEnumerable<HistoryEntry> query = _history.OrderByDescending(h => h.TimestampUtc);
+        IEnumerable<HistoryEntry> query = history.OrderByDescending(h => h.TimestampUtc);
         
         if (skip.HasValue)
             query = query.Skip(skip.Value);
@@ -40,7 +34,7 @@ public class HistoryService : IHistoryService
 
     public Task<List<HistoryEntry>> GetEntityHistoryAsync(string entityType, string entityId)
     {
-        var entityHistory = _history
+        var entityHistory = history
             .Where(h => h.EntityType == entityType && h.EntityId == entityId)
             .OrderByDescending(h => h.TimestampUtc)
             .ToList();
