@@ -14,6 +14,7 @@ This API provides fine-grained access control for applications requiring complex
 ## Architecture
 
 **Three-Level Permission Hierarchy:**
+
 1. **Default Permissions** - System-wide defaults (e.g., `read: true`)
 2. **Group Permissions** - ALLOW/DENY rules for user groups
 3. **User Permissions** - Individual user overrides
@@ -99,6 +100,7 @@ curl /api/v1/groups/abc123/history
 ## Permission Resolution Example
 
 Given:
+
 - Default: `read: true`
 - Group "editors": `write: ALLOW, delete: DENY`  
 - User override: `delete: ALLOW`
@@ -106,6 +108,7 @@ Given:
 **Final permissions:** `read: true, write: true, delete: true`
 
 **Debug output shows:**
+
 ```json
 {
   "permission": "delete",
@@ -185,6 +188,7 @@ All tests use unique identifiers (GUIDs) for parallel execution and complete iso
 ## Use Cases
 
 **Enterprise SaaS Platform:**
+
 ```bash
 # Set up tenant permissions
 curl -X POST /api/v1/permissions -d '{"name": "tenant:read", "isDefault": false}'
@@ -193,6 +197,7 @@ curl -X PUT /api/v1/groups/{id}/permissions -d '{"permissions": [{"permission": 
 ```
 
 **Content Management System:**
+
 ```bash
 # Editor workflow
 curl -X POST /api/v1/groups -d '{"name": "content-editors"}'
@@ -205,6 +210,7 @@ curl -X PUT /api/v1/groups/{id}/permissions -d '{
 ```
 
 **Microservices Authorization:**
+
 ```bash
 # Service-to-service permissions
 curl /api/v1/users/service-account@company.com/permissions
