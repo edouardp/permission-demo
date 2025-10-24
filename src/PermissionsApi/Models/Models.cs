@@ -1,24 +1,28 @@
 namespace PermissionsApi.Models;
 
-public record Permission
+public record Permission : IEntity
 {
     public required string Name { get; init; }
     public required string Description { get; init; }
     public bool IsDefault { get; init; }
+    
+    public string Id => Name; // Permission ID is the Name
 }
 
-public record Group
+public record Group : IEntity
 {
     public required string Id { get; init; }
     public required string Name { get; init; }
     public Dictionary<string, string> Permissions { get; init; } = new();
 }
 
-public record User
+public record User : IEntity
 {
     public required string Email { get; init; }
     public List<string> Groups { get; init; } = [];
     public Dictionary<string, string> Permissions { get; init; } = new();
+    
+    public string Id => Email; // User ID is the Email
 }
 
 public record PermissionRequest
