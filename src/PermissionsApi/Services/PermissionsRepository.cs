@@ -192,6 +192,98 @@ public class PermissionsRepository : IPermissionsRepository
         return Task.FromResult<Dictionary<string, bool>?>(result);
     }
 
+    public Task<PermissionDebugResponse?> CalculatePermissionsDebugAsync(string email, CancellationToken ct)
+    {
+        if (!_users.TryGetValue(email, out var user))
+        {
+            return Task.FromResult<PermissionDebugResponse?>(null);
+        }
+
+        var allPermissions = new HashSet<string>();
+        var defaultPerms = GetDefaultPermissions();
+        allPermissions.UnionWith(defaultPerms.Keys);
+        
+        foreach (var groupId in user.Groups)
+        {
+            if (_groups.TryGetValue(groupId, out var group))
+            {
+                allPermissions.UnionWith(group.Permissions.Keys);
+            }
+        }
+        allPermissions.UnionWith(user.Permissions.Keys);
+
+        var debugItems = new List<PermissionDebugItem>();
+        
+        foreach (var permission in allPermissions.OrderBy(p => p))
+        {
+            var chain = new List<PermissionDebugStep>();
+            bool finalResult = false;
+
+            // Default level
+            if (defaultPerms.TryGetValue(permission, out var defaultValue))
+            {
+                chain.Add(new PermissionDebugStep
+                {
+                    Level = "Default",
+                    Source = "system",
+                    Action = defaultValue ? "ALLOW" : "DENY"
+                });
+                finalResult = defaultValue;
+            }
+            else
+            {
+                chain.Add(new PermissionDebugStep
+                {
+                    Level = "Default",
+                    Source = "system",
+                    Action = "NONE"
+                });
+            }
+
+            // Group level
+            foreach (var groupId in user.Groups)
+            {
+                if (_groups.TryGetValue(groupId, out var group) && group.Permissions.TryGetValue(permission, out var groupAccess))
+                {
+                    chain.Add(new PermissionDebugStep
+                    {
+                        Level = "Group",
+                        Source = group.Name,
+                        Action = groupAccess
+                    });
+                    finalResult = groupAccess == "ALLOW";
+                }
+            }
+
+            // User level
+            if (user.Permissions.TryGetValue(permission, out var userAccess))
+            {
+                chain.Add(new PermissionDebugStep
+                {
+                    Level = "User",
+                    Source = email,
+                    Action = userAccess
+                });
+                finalResult = userAccess == "ALLOW";
+            }
+
+            debugItems.Add(new PermissionDebugItem
+            {
+                Permission = permission,
+                FinalResult = finalResult ? "ALLOW" : "DENY",
+                Chain = chain
+            });
+        }
+
+        var response = new PermissionDebugResponse
+        {
+            Email = email,
+            Permissions = debugItems
+        };
+
+        return Task.FromResult<PermissionDebugResponse?>(response);
+    }
+
     public Task DeleteUserAsync(string email, CancellationToken ct)
     {
         var result = _users.TryRemove(email, out _);

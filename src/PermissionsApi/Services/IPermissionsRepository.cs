@@ -24,4 +24,5 @@ public interface IPermissionsRepository
     Task DeleteUserAsync(string email, CancellationToken ct);
     
     Task<Dictionary<string, bool>?> CalculatePermissionsAsync(string email, CancellationToken ct);
+    Task<PermissionDebugResponse?> CalculatePermissionsDebugAsync(string email, CancellationToken ct);
 }

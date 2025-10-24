@@ -101,6 +101,18 @@ public class PermissionsController : ControllerBase
         return Ok(response);
     }
 
+    [HttpGet("user/{email}/debug")]
+    public async Task<IActionResult> GetUserPermissionsDebug(string email, CancellationToken ct)
+    {
+        var debug = await _repository.CalculatePermissionsDebugAsync(email, ct);
+        if (debug == null)
+        {
+            return NotFound();
+        }
+
+        return Ok(debug);
+    }
+
     [HttpPost("groups")]
     public async Task<IActionResult> CreateGroup([FromBody] CreateGroupRequest request, CancellationToken ct)
     {
