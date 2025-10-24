@@ -5,7 +5,7 @@ public record HistoryEntry(
     string ChangeType,
     string EntityType,
     string EntityId,
-    object EntityAfterChange, // Should be IEntity but object preserves full serialization
+    IEntity EntityAfterChange,
     string? Principal = null,
     string? Reason = null)
 {
