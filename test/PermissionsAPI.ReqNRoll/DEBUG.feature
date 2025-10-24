@@ -110,16 +110,8 @@ Feature: Permission Debug Endpoint
     Content-Type: application/json
 
     {
-      "permissions": [
-        {
-          "permission": "{{WRITE_PERMISSION}}",
-          "access": "ALLOW"
-        },
-        {
-          "permission": "{{DELETE_PERMISSION}}",
-          "access": "DENY"
-        }
-      ]
+      "allow": ["{{WRITE_PERMISSION}}"],
+      "deny": ["{{DELETE_PERMISSION}}"]
     }
     """
 

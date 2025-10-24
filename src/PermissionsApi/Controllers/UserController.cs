@@ -85,10 +85,10 @@ public class UserController(
     public async Task<IActionResult> SetUserPermissions(string email, [FromBody] BatchPermissionRequest request, CancellationToken ct)
     {
         // Validate all permissions exist
-        var permissionNames = request.Permissions.Select(permissionRequest => permissionRequest.Permission).ToList();
+        var allPermissions = request.Allow.Concat(request.Deny).Distinct().ToList();
         var invalidPermissions = new List<string>();
         
-        foreach (var permissionName in permissionNames)
+        foreach (var permissionName in allPermissions)
         {
             var permission = await repository.GetPermissionAsync(permissionName, ct);
             if (permission == null)
@@ -108,9 +108,18 @@ public class UserController(
         }
 
         // Replace all permissions for this user
-        await repository.ReplaceUserPermissionsAsync(email, request.Permissions, ct);
-
-        logger.LogInformation("Replaced permissions for user {Email} with {Count} permissions", email, request.Permissions.Count);
+        var permissions = new Dictionary<string, string>();
+        foreach (var perm in request.Allow)
+        {
+            permissions[perm] = PermissionAccess.Allow;
+        }
+        foreach (var perm in request.Deny)
+        {
+            permissions[perm] = PermissionAccess.Deny;
+        }
+        
+        await repository.SetUserPermissionsAsync(email, permissions, ct, request.Principal, request.Reason);
+        logger.LogInformation("Set {PermissionCount} permissions for user {Email}", permissions.Count, email);
         return Ok();
     }
 

@@ -171,12 +171,8 @@ Feature: Permissions API Integration
     Content-Type: application/json
 
     {
-      "permissions": [
-        {
-          "permission": "write",
-          "access": "ALLOW"
-        }
-      ]
+      "allow": ["write"],
+      "deny": []
     }
     """
 
@@ -278,12 +274,8 @@ Feature: Permissions API Integration
     Content-Type: application/json
 
     {
-      "permissions": [
-        {
-          "permission": "delete",
-          "access": "DENY"
-        }
-      ]
+      "allow": [],
+      "deny": ["delete"]
     }
     """
 
@@ -317,12 +309,8 @@ Feature: Permissions API Integration
     Content-Type: application/json
 
     {
-      "permissions": [
-        {
-          "permission": "delete",
-          "access": "ALLOW"
-        }
-      ]
+      "allow": ["delete"],
+      "deny": []
     }
     """
 
@@ -428,12 +416,8 @@ Feature: Permissions API Integration
     Content-Type: application/json
 
     {
-      "permissions": [
-        {
-          "permission": "write",
-          "access": "ALLOW"
-        }
-      ]
+      "allow": ["write"],
+      "deny": []
     }
     """
 
@@ -449,12 +433,8 @@ Feature: Permissions API Integration
     Content-Type: application/json
 
     {
-      "permissions": [
-        {
-          "permission": "delete",
-          "access": "ALLOW"
-        }
-      ]
+      "allow": ["delete"],
+      "deny": []
     }
     """
 

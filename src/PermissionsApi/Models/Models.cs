@@ -27,12 +27,6 @@ public record User : IEntity
     public string Id => Email; // User ID is the Email
 }
 
-public record PermissionRequest
-{
-    public required string Permission { get; init; }
-    public required string Access { get; init; }
-}
-
 public record PermissionAccessRequest : AuditableRequest
 {
     public required string Access { get; init; }
@@ -40,7 +34,8 @@ public record PermissionAccessRequest : AuditableRequest
 
 public record BatchPermissionRequest : AuditableRequest
 {
-    public required List<PermissionRequest> Permissions { get; init; } = [];
+    public List<string> Allow { get; init; } = [];
+    public List<string> Deny { get; init; } = [];
 }
 
 public record CreateGroupRequest : AuditableRequest

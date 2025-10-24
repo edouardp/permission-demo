@@ -98,18 +98,15 @@ public class PermissionsRepository(ILogger<PermissionsRepository> logger, IHisto
         return Task.CompletedTask;
     }
 
-    public Task ReplaceGroupPermissionsAsync(string groupId, List<PermissionRequest> permissionRequest, CancellationToken ct)
+    public async Task SetGroupPermissionsAsync(string groupId, Dictionary<string, string> permissions, CancellationToken ct, string? principal = null, string? reason = null)
     {
         if (groups.TryGetValue(groupId, out var group))
         {
-            group.Permissions.Clear();
-            foreach (var permission in permissionRequest)
-            {
-                group.Permissions[permission.Permission] = permission.Access;
-            }
-            logger.LogInformation("Replaced group {GroupId} permissions with {Count} permissions", groupId, permissionRequest.Count);
+            var updatedGroup = group with { Permissions = new Dictionary<string, string>(permissions) };
+            groups[groupId] = updatedGroup;
+            await historyService.RecordChangeAsync("UPDATE", "Group", groupId, updatedGroup, principal, reason);
+            logger.LogInformation("Set group {GroupId} permissions with {Count} permissions", groupId, permissions.Count);
         }
-        return Task.CompletedTask;
     }
 
     public Task RemoveGroupPermissionAsync(string groupId, string permission, CancellationToken ct)
@@ -141,18 +138,15 @@ public class PermissionsRepository(ILogger<PermissionsRepository> logger, IHisto
         return Task.CompletedTask;
     }
 
-    public Task ReplaceUserPermissionsAsync(string email, List<PermissionRequest> permissionList, CancellationToken ct)
+    public async Task SetUserPermissionsAsync(string email, Dictionary<string, string> permissions, CancellationToken ct, string? principal = null, string? reason = null)
     {
         if (users.TryGetValue(email, out var user))
         {
-            user.Permissions.Clear();
-            foreach (var permission in permissionList)
-            {
-                user.Permissions[permission.Permission] = permission.Access;
-            }
-            logger.LogInformation("Replaced user {Email} permissions with {Count} permissions", email, permissionList.Count);
+            var updatedUser = user with { Permissions = new Dictionary<string, string>(permissions) };
+            users[email] = updatedUser;
+            await historyService.RecordChangeAsync("UPDATE", "User", email, updatedUser, principal, reason);
+            logger.LogInformation("Set user {Email} permissions with {Count} permissions", email, permissions.Count);
         }
-        return Task.CompletedTask;
     }
 
     public Task RemoveUserPermissionAsync(string email, string permission, CancellationToken ct)

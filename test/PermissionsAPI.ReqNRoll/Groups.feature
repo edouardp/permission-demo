@@ -64,12 +64,8 @@ Feature: Groups
     Content-Type: application/json
 
     {
-      "permissions": [
-        {
-          "permission": "read",
-          "access": "DENY"
-        }
-      ]
+      "allow": [],
+      "deny": ["read"]
     }
     """
 
@@ -169,12 +165,8 @@ Feature: Groups
     Content-Type: application/json
 
     {
-      "permissions": [
-        {
-          "permission": "nonexistent-permission",
-          "access": "ALLOW"
-        }
-      ]
+      "allow": ["nonexistent-permission"],
+      "deny": []
     }
     """
 

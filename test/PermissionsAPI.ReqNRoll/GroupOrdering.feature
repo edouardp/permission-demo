@@ -106,12 +106,8 @@ Feature: Group Ordering
     Content-Type: application/json
 
     {
-      "permissions": [
-        {
-          "permission": "{{TEST_PERMISSION}}",
-          "access": "ALLOW"
-        }
-      ]
+      "allow": ["{{TEST_PERMISSION}}"],
+      "deny": []
     }
     """
 
@@ -126,12 +122,8 @@ Feature: Group Ordering
     Content-Type: application/json
 
     {
-      "permissions": [
-        {
-          "permission": "{{TEST_PERMISSION}}",
-          "access": "DENY"
-        }
-      ]
+      "allow": [],
+      "deny": ["{{TEST_PERMISSION}}"]
     }
     """
 
@@ -146,12 +138,8 @@ Feature: Group Ordering
     Content-Type: application/json
 
     {
-      "permissions": [
-        {
-          "permission": "{{TEST_PERMISSION}}",
-          "access": "ALLOW"
-        }
-      ]
+      "allow": ["{{TEST_PERMISSION}}"],
+      "deny": []
     }
     """
 

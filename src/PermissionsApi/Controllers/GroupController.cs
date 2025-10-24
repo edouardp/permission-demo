@@ -55,10 +55,10 @@ public class GroupController(
     public async Task<IActionResult> SetGroupPermissions(string groupId, [FromBody] BatchPermissionRequest request, CancellationToken ct)
     {
         // Validate all permissions exist
-        var permissionNames = request.Permissions.Select(permissionRequest => permissionRequest.Permission).ToList();
+        var allPermissions = request.Allow.Concat(request.Deny).Distinct().ToList();
         var invalidPermissions = new List<string>();
         
-        foreach (var permissionName in permissionNames)
+        foreach (var permissionName in allPermissions)
         {
             var permission = await repository.GetPermissionAsync(permissionName, ct);
             if (permission == null)
@@ -78,9 +78,18 @@ public class GroupController(
         }
 
         // Replace all permissions for this group
-        await repository.ReplaceGroupPermissionsAsync(groupId, request.Permissions, ct);
-
-        logger.LogInformation("Replaced permissions for group {GroupId} with {Count} permissions", groupId, request.Permissions.Count);
+        var permissions = new Dictionary<string, string>();
+        foreach (var perm in request.Allow)
+        {
+            permissions[perm] = PermissionAccess.Allow;
+        }
+        foreach (var perm in request.Deny)
+        {
+            permissions[perm] = PermissionAccess.Deny;
+        }
+        
+        await repository.SetGroupPermissionsAsync(groupId, permissions, ct, request.Principal, request.Reason);
+        logger.LogInformation("Set {PermissionCount} permissions for group {GroupId}", permissions.Count, groupId);
         return Ok();
     }
 

@@ -125,12 +125,8 @@ Feature: Users
     Content-Type: application/json
 
     {
-      "permissions": [
-        {
-          "permission": "write",
-          "access": "ALLOW"
-        }
-      ]
+      "allow": ["write"],
+      "deny": []
     }
     """
 
@@ -200,12 +196,8 @@ Feature: Users
     Content-Type: application/json
 
     {
-      "permissions": [
-        {
-          "permission": "read",
-          "access": "DENY"
-        }
-      ]
+      "allow": [],
+      "deny": ["read"]
     }
     """
 
@@ -275,20 +267,8 @@ Feature: Users
     Content-Type: application/json
 
     {
-      "permissions": [
-        {
-          "permission": "write",
-          "access": "ALLOW"
-        },
-        {
-          "permission": "delete",
-          "access": "ALLOW"
-        },
-        {
-          "permission": "execute",
-          "access": "DENY"
-        }
-      ]
+      "allow": ["write", "delete"],
+      "deny": ["execute"]
     }
     """
 
@@ -379,12 +359,8 @@ Feature: Users
     Content-Type: application/json
 
     {
-      "permissions": [
-        {
-          "permission": "nonexistent-permission",
-          "access": "ALLOW"
-        }
-      ]
+      "allow": ["nonexistent-permission"],
+      "deny": []
     }
     """
 
@@ -441,24 +417,8 @@ Feature: Users
     Content-Type: application/json
 
     {
-      "permissions": [
-        {
-          "permission": "write",
-          "access": "ALLOW"
-        },
-        {
-          "permission": "invalid-perm-1",
-          "access": "ALLOW"
-        },
-        {
-          "permission": "delete",
-          "access": "DENY"
-        },
-        {
-          "permission": "invalid-perm-2",
-          "access": "ALLOW"
-        }
-      ]
+      "allow": ["write", "invalid-perm-1", "invalid-perm-2"],
+      "deny": ["delete"]
     }
     """
 
@@ -668,16 +628,8 @@ Feature: Users
     Content-Type: application/json
 
     {
-      "permissions": [
-        {
-          "permission": "write",
-          "access": "ALLOW"
-        },
-        {
-          "permission": "delete",
-          "access": "DENY"
-        }
-      ]
+      "allow": ["write"],
+      "deny": ["delete"]
     }
     """
 
