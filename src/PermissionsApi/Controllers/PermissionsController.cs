@@ -31,14 +31,31 @@ public class PermissionsController(
         return CreatedAtAction(nameof(GetPermission), new { name = permission.Name }, permission);
     }
 
+    /// <summary>
+    /// Gets all permissions in the system
+    /// </summary>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>List of all permissions</returns>
+    /// <response code="200">Permissions retrieved successfully</response>
     [HttpGet("permissions")]
+    [ProducesResponseType(typeof(List<Permission>), 200)]
     public async Task<IActionResult> GetAllPermissions(CancellationToken ct)
     {
         var permissions = await repository.GetAllPermissionsAsync(ct);
         return Ok(permissions);
     }
 
+    /// <summary>
+    /// Gets a specific permission by name
+    /// </summary>
+    /// <param name="name">Permission name</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>The requested permission</returns>
+    /// <response code="200">Permission found</response>
+    /// <response code="404">Permission not found</response>
     [HttpGet("permissions/{name}")]
+    [ProducesResponseType(typeof(Permission), 200)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> GetPermission(string name, CancellationToken ct)
     {
         var permission = await repository.GetPermissionAsync(name, ct);
@@ -50,7 +67,18 @@ public class PermissionsController(
         return Ok(permission);
     }
 
+    /// <summary>
+    /// Updates a permission's description
+    /// </summary>
+    /// <param name="name">Permission name</param>
+    /// <param name="request">Updated permission details</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Success status</returns>
+    /// <response code="200">Permission updated successfully</response>
+    /// <response code="404">Permission not found</response>
     [HttpPut("permissions/{name}")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> UpdatePermission(string name, [FromBody] UpdatePermissionRequest request, CancellationToken ct)
     {
         logger.LogInformation("Updating permission {PermissionName}", name);
@@ -62,7 +90,17 @@ public class PermissionsController(
         return Ok();
     }
 
+    /// <summary>
+    /// Deletes a permission from the system
+    /// </summary>
+    /// <param name="name">Permission name</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Success status</returns>
+    /// <response code="204">Permission deleted successfully</response>
+    /// <response code="404">Permission not found</response>
     [HttpDelete("permissions/{name}")]
+    [ProducesResponseType(204)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> DeletePermission(string name, CancellationToken ct)
     {
         logger.LogInformation("Deleting permission {PermissionName}", name);
@@ -74,7 +112,18 @@ public class PermissionsController(
         return NoContent();
     }
 
+    /// <summary>
+    /// Sets or unsets a permission as a system default
+    /// </summary>
+    /// <param name="name">Permission name</param>
+    /// <param name="isDefault">Whether this permission should be a system default</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Success status</returns>
+    /// <response code="200">Default status updated successfully</response>
+    /// <response code="404">Permission not found</response>
     [HttpPut("permissions/{name}/default")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> SetPermissionDefault(string name, [FromBody] bool isDefault, CancellationToken ct)
     {
         logger.LogInformation("Setting permission {PermissionName} IsDefault to {IsDefault}", name, isDefault);
@@ -138,28 +187,59 @@ public class PermissionsController(
         return Ok(debug);
     }
 
+    /// <summary>
+    /// Gets change history for a specific permission
+    /// </summary>
+    /// <param name="name">Permission name</param>
+    /// <returns>List of historical changes for the permission</returns>
+    /// <response code="200">History retrieved successfully</response>
     [HttpGet("permissions/{name}/history")]
+    [ProducesResponseType(typeof(List<HistoryEntry>), 200)]
     public async Task<IActionResult> GetPermissionHistory(string name)
     {
         var history = await historyService.GetEntityHistoryAsync("Permission", name);
         return Ok(history);
     }
 
+    /// <summary>
+    /// Gets change history for a specific user
+    /// </summary>
+    /// <param name="email">User email address</param>
+    /// <returns>List of historical changes for the user</returns>
+    /// <response code="200">History retrieved successfully</response>
     [HttpGet("users/{email}/history")]
+    [ProducesResponseType(typeof(List<HistoryEntry>), 200)]
     public async Task<IActionResult> GetUserHistory(string email)
     {
         var history = await historyService.GetEntityHistoryAsync("User", email);
         return Ok(history);
     }
 
+    /// <summary>
+    /// Gets change history for a specific group
+    /// </summary>
+    /// <param name="id">Group ID</param>
+    /// <returns>List of historical changes for the group</returns>
+    /// <response code="200">History retrieved successfully</response>
     [HttpGet("groups/{id}/history")]
+    [ProducesResponseType(typeof(List<HistoryEntry>), 200)]
     public async Task<IActionResult> GetGroupHistory(string id)
     {
         var history = await historyService.GetEntityHistoryAsync("Group", id);
         return Ok(history);
     }
 
+    /// <summary>
+    /// Creates a new group for organizing users and permissions
+    /// </summary>
+    /// <param name="request">Group details including name</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>The created group with generated ID</returns>
+    /// <response code="201">Group created successfully</response>
+    /// <response code="400">Invalid request data</response>
     [HttpPost("groups")]
+    [ProducesResponseType(typeof(Group), 201)]
+    [ProducesResponseType(400)]
     public async Task<IActionResult> CreateGroup([FromBody] CreateGroupRequest request, CancellationToken ct)
     {
         logger.LogInformation("Creating group {GroupName}", request.Name);
@@ -167,7 +247,18 @@ public class PermissionsController(
         return CreatedAtAction(nameof(CreateGroup), new { id = group.Id, name = group.Name });
     }
 
+    /// <summary>
+    /// Replaces all permissions for a group with the provided set (batch operation)
+    /// </summary>
+    /// <param name="groupId">Group ID</param>
+    /// <param name="request">List of permissions with ALLOW/DENY access levels</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Success status</returns>
+    /// <response code="200">Group permissions updated successfully</response>
+    /// <response code="400">Invalid permissions or request data</response>
     [HttpPut("groups/{groupId}/permissions")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
     public async Task<IActionResult> SetGroupPermissions(string groupId, [FromBody] BatchPermissionRequest request, CancellationToken ct)
     {
         // Validate all permissions exist
@@ -200,7 +291,19 @@ public class PermissionsController(
         return Ok();
     }
 
+    /// <summary>
+    /// Sets a single permission for a group with ALLOW or DENY access
+    /// </summary>
+    /// <param name="groupId">Group ID</param>
+    /// <param name="permissionName">Permission name</param>
+    /// <param name="request">Access level (ALLOW or DENY)</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Success status</returns>
+    /// <response code="200">Group permission set successfully</response>
+    /// <response code="400">Invalid permission or request data</response>
     [HttpPut("groups/{groupId}/permissions/{permissionName}")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
     public async Task<IActionResult> SetGroupPermission(string groupId, string permissionName, [FromBody] PermissionAccessRequest request, CancellationToken ct)
     {
         // Validate permission exists
@@ -220,7 +323,16 @@ public class PermissionsController(
         return Ok();
     }
 
+    /// <summary>
+    /// Removes a specific permission from a group
+    /// </summary>
+    /// <param name="groupId">Group ID</param>
+    /// <param name="permissionName">Permission name to remove</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Success status</returns>
+    /// <response code="204">Permission removed successfully</response>
     [HttpDelete("groups/{groupId}/permissions/{permissionName}")]
+    [ProducesResponseType(204)]
     public async Task<IActionResult> RemoveGroupPermission(string groupId, string permissionName, CancellationToken ct)
     {
         await repository.RemoveGroupPermissionAsync(groupId, permissionName, ct);
@@ -228,7 +340,17 @@ public class PermissionsController(
         return NoContent();
     }
 
+    /// <summary>
+    /// Creates a new user with optional group memberships
+    /// </summary>
+    /// <param name="request">User details including email and group assignments</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Success status</returns>
+    /// <response code="201">User created successfully</response>
+    /// <response code="400">Invalid request data</response>
     [HttpPost("users")]
+    [ProducesResponseType(201)]
+    [ProducesResponseType(400)]
     public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest request, CancellationToken ct)
     {
         logger.LogInformation("Creating user {Email}", request.Email);
@@ -236,7 +358,18 @@ public class PermissionsController(
         return CreatedAtAction(nameof(CreateUser), null);
     }
 
+    /// <summary>
+    /// Replaces all permissions for a user with the provided set (batch operation)
+    /// </summary>
+    /// <param name="email">User email address</param>
+    /// <param name="request">List of permissions with ALLOW/DENY access levels</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Success status</returns>
+    /// <response code="200">User permissions updated successfully</response>
+    /// <response code="400">Invalid permissions or request data</response>
     [HttpPut("users/{email}/permissions")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
     public async Task<IActionResult> SetUserPermissions(string email, [FromBody] BatchPermissionRequest request, CancellationToken ct)
     {
         // Validate all permissions exist
@@ -269,7 +402,19 @@ public class PermissionsController(
         return Ok();
     }
 
+    /// <summary>
+    /// Sets a single permission for a user with ALLOW or DENY access
+    /// </summary>
+    /// <param name="email">User email address</param>
+    /// <param name="permissionName">Permission name</param>
+    /// <param name="request">Access level (ALLOW or DENY)</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Success status</returns>
+    /// <response code="200">User permission set successfully</response>
+    /// <response code="400">Invalid permission or request data</response>
     [HttpPut("users/{email}/permissions/{permissionName}")]
+    [ProducesResponseType(200)]
+    [ProducesResponseType(400)]
     public async Task<IActionResult> SetUserPermission(string email, string permissionName, [FromBody] PermissionAccessRequest request, CancellationToken ct)
     {
         // Validate permission exists
@@ -289,7 +434,16 @@ public class PermissionsController(
         return Ok();
     }
 
+    /// <summary>
+    /// Removes a specific permission from a user
+    /// </summary>
+    /// <param name="email">User email address</param>
+    /// <param name="permissionName">Permission name to remove</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Success status</returns>
+    /// <response code="204">Permission removed successfully</response>
     [HttpDelete("users/{email}/permissions/{permissionName}")]
+    [ProducesResponseType(204)]
     public async Task<IActionResult> RemoveUserPermission(string email, string permissionName, CancellationToken ct)
     {
         await repository.RemoveUserPermissionAsync(email, permissionName, ct);
@@ -297,7 +451,15 @@ public class PermissionsController(
         return NoContent();
     }
 
+    /// <summary>
+    /// Deletes a user and all associated permissions
+    /// </summary>
+    /// <param name="email">User email address</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Success status</returns>
+    /// <response code="204">User deleted successfully</response>
     [HttpDelete("users/{email}")]
+    [ProducesResponseType(204)]
     public async Task<IActionResult> DeleteUser(string email, CancellationToken ct)
     {
         logger.LogInformation("Deleting user {Email}", email);
@@ -305,7 +467,15 @@ public class PermissionsController(
         return NoContent();
     }
 
+    /// <summary>
+    /// Deletes a group and all associated permissions
+    /// </summary>
+    /// <param name="groupId">Group ID</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Success status</returns>
+    /// <response code="204">Group deleted successfully</response>
     [HttpDelete("groups/{groupId}")]
+    [ProducesResponseType(204)]
     public async Task<IActionResult> DeleteGroup(string groupId, CancellationToken ct)
     {
         logger.LogInformation("Deleting group {GroupId}", groupId);
