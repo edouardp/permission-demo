@@ -142,7 +142,7 @@ Feature: Users
     # Verify user has default "read" plus user-level "write"
     Given the following request
     """
-    GET /api/v1/permissions/user/{{USER_EMAIL}} HTTP/1.1
+    GET /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
     """
 
     Then the API returns the following response
@@ -219,7 +219,7 @@ Feature: Users
     # Verify user-level DENY has overridden the default ALLOW
     Given the following request
     """
-    GET /api/v1/permissions/user/{{USER_EMAIL}} HTTP/1.1
+    GET /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
     """
 
     Then the API returns the following response
@@ -303,7 +303,7 @@ Feature: Users
     # Verify all user-level permissions are applied
     Given the following request
     """
-    GET /api/v1/permissions/user/{{USER_EMAIL}} HTTP/1.1
+    GET /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
     """
 
     Then the API returns the following response
@@ -342,7 +342,7 @@ Feature: Users
     # Attempt to read permissions for user that was never created
     Given the following request
     """
-    GET /api/v1/permissions/user/{{NON_EXISTENT_EMAIL}} HTTP/1.1
+    GET /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
     """
 
     Then the API returns the following response
@@ -479,6 +479,327 @@ Feature: Users
       "title": "Invalid Permissions",
       "status": 400,
       "detail": "The following permissions do not exist: invalid-perm-1, invalid-perm-2"
+    }
+    """
+
+    # Cleanup: Delete user
+    Given the following request
+    """
+    DELETE /api/v1/users/{{USER_EMAIL}} HTTP/1.1
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 204 NoContent
+    """
+  Scenario: Individual permission management
+    # WHEN managing individual permissions on a user
+    # THEN the system SHALL support setting and removing individual permissions
+    
+    Given the variable 'USER_EMAIL' is set to 'test-user-{{GUID()}}@example.com'
+
+    # Create a user
+    Given the following request
+    """
+    POST /api/v1/users HTTP/1.1
+    Content-Type: application/json
+
+    {
+      "email": "{{USER_EMAIL}}",
+      "groups": []
+    }
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 201 Created
+    """
+
+    # Set individual permission
+    Given the following request
+    """
+    PUT /api/v1/users/{{USER_EMAIL}}/permissions/write HTTP/1.1
+    Content-Type: application/json
+
+    {
+      "access": "ALLOW"
+    }
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 200 OK
+    """
+
+    # Verify permission was set
+    Given the following request
+    """
+    GET /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 200 OK
+    Content-Type: application/json
+
+    {
+      "email": "{{USER_EMAIL}}",
+      "permissions": {
+        "read": true,
+        "write": true
+      }
+    }
+    """
+
+    # Remove individual permission
+    Given the following request
+    """
+    DELETE /api/v1/users/{{USER_EMAIL}}/permissions/write HTTP/1.1
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 204 NoContent
+    """
+
+    # Verify permission was removed
+    Given the following request
+    """
+    GET /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 200 OK
+    Content-Type: application/json
+
+    {
+      "email": "{{USER_EMAIL}}",
+      "permissions": {
+        "read": true
+      }
+    }
+    """
+
+    # Cleanup: Delete user
+    Given the following request
+    """
+    DELETE /api/v1/users/{{USER_EMAIL}} HTTP/1.1
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 204 NoContent
+    """
+  Scenario: Setting individual non-existent permission on user returns error
+    # WHEN attempting to set an individual permission that doesn't exist on a user
+    # THEN the system SHALL return an error response
+    
+    Given the variable 'USER_EMAIL' is set to 'test-user-{{GUID()}}@example.com'
+
+    # Create a user
+    Given the following request
+    """
+    POST /api/v1/users HTTP/1.1
+    Content-Type: application/json
+
+    {
+      "email": "{{USER_EMAIL}}",
+      "groups": []
+    }
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 201 Created
+    """
+
+    # Attempt to set a non-existent individual permission
+    Given the following request
+    """
+    PUT /api/v1/users/{{USER_EMAIL}}/permissions/invalid-permission HTTP/1.1
+    Content-Type: application/json
+
+    {
+      "access": "ALLOW"
+    }
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 400 BadRequest
+    Content-Type: application/problem+json
+
+    {
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+      "title": "Invalid Permission",
+      "status": 400,
+      "detail": "Permission 'invalid-permission' does not exist"
+    }
+    """
+
+    # Cleanup: Delete user
+    Given the following request
+    """
+    DELETE /api/v1/users/{{USER_EMAIL}} HTTP/1.1
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 204 NoContent
+    """
+  Scenario: Mixed batch and individual permission operations
+    # WHEN using both batch and individual permission operations
+    # THEN the system SHALL handle both approaches correctly
+    
+    Given the variable 'USER_EMAIL' is set to 'test-user-{{GUID()}}@example.com'
+
+    # Create a user
+    Given the following request
+    """
+    POST /api/v1/users HTTP/1.1
+    Content-Type: application/json
+
+    {
+      "email": "{{USER_EMAIL}}",
+      "groups": []
+    }
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 201 Created
+    """
+
+    # Set multiple permissions using batch operation
+    Given the following request
+    """
+    PUT /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
+    Content-Type: application/json
+
+    {
+      "permissions": [
+        {
+          "permission": "write",
+          "access": "ALLOW"
+        },
+        {
+          "permission": "delete",
+          "access": "DENY"
+        }
+      ]
+    }
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 200 OK
+    """
+
+    # Verify batch operation worked
+    Given the following request
+    """
+    GET /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 200 OK
+    Content-Type: application/json
+
+    {
+      "email": "{{USER_EMAIL}}",
+      "permissions": {
+        "read": true,
+        "write": true,
+        "delete": false
+      }
+    }
+    """
+
+    # Override one permission using individual operation
+    Given the following request
+    """
+    PUT /api/v1/users/{{USER_EMAIL}}/permissions/delete HTTP/1.1
+    Content-Type: application/json
+
+    {
+      "access": "ALLOW"
+    }
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 200 OK
+    """
+
+    # Add new permission using individual operation
+    Given the following request
+    """
+    PUT /api/v1/users/{{USER_EMAIL}}/permissions/execute HTTP/1.1
+    Content-Type: application/json
+
+    {
+      "access": "DENY"
+    }
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 200 OK
+    """
+
+    # Verify mixed operations worked
+    Given the following request
+    """
+    GET /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 200 OK
+    Content-Type: application/json
+
+    {
+      "email": "{{USER_EMAIL}}",
+      "permissions": {
+        "read": true,
+        "write": true,
+        "delete": true,
+        "execute": false
+      }
+    }
+    """
+
+    # Remove one permission using individual operation
+    Given the following request
+    """
+    DELETE /api/v1/users/{{USER_EMAIL}}/permissions/execute HTTP/1.1
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 204 NoContent
+    """
+
+    # Verify permission was removed
+    Given the following request
+    """
+    GET /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 200 OK
+    Content-Type: application/json
+
+    {
+      "email": "{{USER_EMAIL}}",
+      "permissions": {
+        "read": true,
+        "write": true,
+        "delete": true
+      }
     }
     """
 

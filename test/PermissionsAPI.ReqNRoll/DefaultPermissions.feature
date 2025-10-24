@@ -76,7 +76,7 @@ Feature: Default Permissions
     # Verify user gets both read (from Background) and new default permission
     Given the following request
     """
-    GET /api/v1/permissions/user/{{USER_EMAIL}} HTTP/1.1
+    GET /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
     """
 
     Then the API returns the following response
@@ -165,7 +165,7 @@ Feature: Default Permissions
     # Verify user does NOT have this permission
     Given the following request
     """
-    GET /api/v1/permissions/user/{{USER_EMAIL}} HTTP/1.1
+    GET /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
     """
 
     Then the API returns the following response
@@ -197,7 +197,7 @@ Feature: Default Permissions
     # Verify user now has this permission
     Given the following request
     """
-    GET /api/v1/permissions/user/{{USER_EMAIL}} HTTP/1.1
+    GET /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
     """
 
     Then the API returns the following response
@@ -230,7 +230,7 @@ Feature: Default Permissions
     # Verify user no longer has this permission
     Given the following request
     """
-    GET /api/v1/permissions/user/{{USER_EMAIL}} HTTP/1.1
+    GET /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
     """
 
     Then the API returns the following response

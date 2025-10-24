@@ -107,7 +107,7 @@ Feature: Permissions API Integration
     # Query permissions for the user
     Given the following request
     """
-    GET /api/v1/permissions/user/{{USER_EMAIL}} HTTP/1.1
+    GET /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
     """
 
     # Should return default permissions only
@@ -206,7 +206,7 @@ Feature: Permissions API Integration
     # Verify user has both default "read" and group-inherited "write" permissions
     Given the following request
     """
-    GET /api/v1/permissions/user/{{USER_EMAIL}} HTTP/1.1
+    GET /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
     """
 
     Then the API returns the following response
@@ -338,7 +338,7 @@ Feature: Permissions API Integration
     # User should have "delete": true despite group having "delete": DENY
     Given the following request
     """
-    GET /api/v1/permissions/user/{{USER_EMAIL}} HTTP/1.1
+    GET /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
     """
 
     Then the API returns the following response
@@ -489,7 +489,7 @@ Feature: Permissions API Integration
     # Should have: "read" (default), "write" (from editors), "delete" (from admins)
     Given the following request
     """
-    GET /api/v1/permissions/user/{{USER_EMAIL}} HTTP/1.1
+    GET /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
     """
 
     Then the API returns the following response

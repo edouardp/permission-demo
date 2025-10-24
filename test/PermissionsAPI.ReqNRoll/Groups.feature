@@ -99,7 +99,7 @@ Feature: Groups
     # User should have "read": false instead of the default "read": true
     Given the following request
     """
-    GET /api/v1/permissions/user/{{USER_EMAIL}} HTTP/1.1
+    GET /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
     """
 
     Then the API returns the following response
@@ -188,6 +188,196 @@ Feature: Groups
       "title": "Invalid Permissions",
       "status": 400,
       "detail": "The following permissions do not exist: nonexistent-permission"
+    }
+    """
+
+    # Cleanup: Delete group
+    Given the following request
+    """
+    DELETE /api/v1/groups/{{GROUP_ID}} HTTP/1.1
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 204 NoContent
+    """
+  Scenario: Individual group permission management
+    # WHEN managing individual permissions on a group
+    # THEN the system SHALL support setting and removing individual permissions
+    
+    Given the variable 'GROUP_NAME' is set to 'test-group-{{GUID()}}'
+
+    # Create a group
+    Given the following request
+    """
+    POST /api/v1/groups HTTP/1.1
+    Content-Type: application/json
+
+    {
+      "name": "{{GROUP_NAME}}"
+    }
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 201 Created
+
+    {
+      "id": [[GROUP_ID]]
+    }
+    """
+
+    # Set individual permission
+    Given the following request
+    """
+    PUT /api/v1/groups/{{GROUP_ID}}/permissions/read HTTP/1.1
+    Content-Type: application/json
+
+    {
+      "access": "DENY"
+    }
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 200 OK
+    """
+
+    # Create user to test group permission inheritance
+    Given the variable 'USER_EMAIL' is set to 'test-user-{{GUID()}}@example.com'
+    Given the following request
+    """
+    POST /api/v1/users HTTP/1.1
+    Content-Type: application/json
+
+    {
+      "email": "{{USER_EMAIL}}",
+      "groups": ["{{GROUP_ID}}"]
+    }
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 201 Created
+    """
+
+    # Verify group permission was applied
+    Given the following request
+    """
+    GET /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 200 OK
+    Content-Type: application/json
+
+    {
+      "email": "{{USER_EMAIL}}",
+      "permissions": {
+        "read": false
+      }
+    }
+    """
+
+    # Remove individual permission
+    Given the following request
+    """
+    DELETE /api/v1/groups/{{GROUP_ID}}/permissions/read HTTP/1.1
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 204 NoContent
+    """
+
+    # Verify permission was removed (should revert to default)
+    Given the following request
+    """
+    GET /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 200 OK
+    Content-Type: application/json
+
+    {
+      "email": "{{USER_EMAIL}}",
+      "permissions": {
+        "read": true
+      }
+    }
+    """
+
+    # Cleanup: Delete user
+    Given the following request
+    """
+    DELETE /api/v1/users/{{USER_EMAIL}} HTTP/1.1
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 204 NoContent
+    """
+
+    # Cleanup: Delete group
+    Given the following request
+    """
+    DELETE /api/v1/groups/{{GROUP_ID}} HTTP/1.1
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 204 NoContent
+    """
+  Scenario: Setting individual non-existent permission on group returns error
+    # WHEN attempting to set an individual permission that doesn't exist on a group
+    # THEN the system SHALL return an error response
+    
+    Given the variable 'GROUP_NAME' is set to 'test-group-{{GUID()}}'
+
+    # Create a group
+    Given the following request
+    """
+    POST /api/v1/groups HTTP/1.1
+    Content-Type: application/json
+
+    {
+      "name": "{{GROUP_NAME}}"
+    }
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 201 Created
+
+    {
+      "id": [[GROUP_ID]]
+    }
+    """
+
+    # Attempt to set a non-existent individual permission
+    Given the following request
+    """
+    PUT /api/v1/groups/{{GROUP_ID}}/permissions/invalid-permission HTTP/1.1
+    Content-Type: application/json
+
+    {
+      "access": "ALLOW"
+    }
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 400 BadRequest
+    Content-Type: application/problem+json
+
+    {
+      "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+      "title": "Invalid Permission",
+      "status": 400,
+      "detail": "Permission 'invalid-permission' does not exist"
     }
     """
 

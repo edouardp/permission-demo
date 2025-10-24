@@ -81,7 +81,7 @@ public class PermissionsController : ControllerBase
         return Ok();
     }
 
-    [HttpGet("permissions/user/{email}")]
+    [HttpGet("users/{email}/permissions")]
     public async Task<IActionResult> GetPermissions(string email, CancellationToken ct)
     {
         var permissions = await _repository.CalculatePermissionsAsync(email, ct);
@@ -132,6 +132,34 @@ public class PermissionsController : ControllerBase
         return Ok();
     }
 
+    [HttpPut("groups/{groupId}/permissions/{permissionName}")]
+    public async Task<IActionResult> SetGroupPermission(string groupId, string permissionName, [FromBody] PermissionAccessRequest request, CancellationToken ct)
+    {
+        // Validate permission exists
+        var permission = await _repository.GetPermissionAsync(permissionName, ct);
+        if (permission == null)
+        {
+            _logger.LogWarning("Permission {PermissionName} not found", permissionName);
+            return Problem(
+                title: "Invalid Permission",
+                detail: $"Permission '{permissionName}' does not exist",
+                statusCode: 400
+            );
+        }
+
+        await _repository.SetGroupPermissionAsync(groupId, permissionName, request.Access, ct);
+        _logger.LogInformation("Set group {GroupId} permission {Permission} to {Access}", groupId, permissionName, request.Access);
+        return Ok();
+    }
+
+    [HttpDelete("groups/{groupId}/permissions/{permissionName}")]
+    public async Task<IActionResult> RemoveGroupPermission(string groupId, string permissionName, CancellationToken ct)
+    {
+        await _repository.RemoveGroupPermissionAsync(groupId, permissionName, ct);
+        _logger.LogInformation("Removed group {GroupId} permission {Permission}", groupId, permissionName);
+        return NoContent();
+    }
+
     [HttpPost("users")]
     public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest request, CancellationToken ct)
     {
@@ -169,6 +197,34 @@ public class PermissionsController : ControllerBase
 
         _logger.LogInformation("Replaced permissions for user {Email} with {Count} permissions", email, request.Permissions.Count);
         return Ok();
+    }
+
+    [HttpPut("users/{email}/permissions/{permissionName}")]
+    public async Task<IActionResult> SetUserPermission(string email, string permissionName, [FromBody] PermissionAccessRequest request, CancellationToken ct)
+    {
+        // Validate permission exists
+        var permission = await _repository.GetPermissionAsync(permissionName, ct);
+        if (permission == null)
+        {
+            _logger.LogWarning("Permission {PermissionName} not found", permissionName);
+            return Problem(
+                title: "Invalid Permission",
+                detail: $"Permission '{permissionName}' does not exist",
+                statusCode: 400
+            );
+        }
+
+        await _repository.SetUserPermissionAsync(email, permissionName, request.Access, ct);
+        _logger.LogInformation("Set user {Email} permission {Permission} to {Access}", email, permissionName, request.Access);
+        return Ok();
+    }
+
+    [HttpDelete("users/{email}/permissions/{permissionName}")]
+    public async Task<IActionResult> RemoveUserPermission(string email, string permissionName, CancellationToken ct)
+    {
+        await _repository.RemoveUserPermissionAsync(email, permissionName, ct);
+        _logger.LogInformation("Removed user {Email} permission {Permission}", email, permissionName);
+        return NoContent();
     }
 
     [HttpDelete("users/{email}")]

@@ -109,6 +109,16 @@ public class PermissionsRepository : IPermissionsRepository
         return Task.CompletedTask;
     }
 
+    public Task RemoveGroupPermissionAsync(string groupId, string permission, CancellationToken ct)
+    {
+        if (_groups.TryGetValue(groupId, out var group))
+        {
+            group.Permissions.Remove(permission);
+            _logger.LogInformation("Removed group {GroupId} permission {Permission}", groupId, permission);
+        }
+        return Task.CompletedTask;
+    }
+
     public Task<User> CreateUserAsync(string email, List<string> groups, CancellationToken ct)
     {
         var user = new User { Email = email, Groups = groups };
@@ -137,6 +147,16 @@ public class PermissionsRepository : IPermissionsRepository
                 user.Permissions[permission.Permission] = permission.Access;
             }
             _logger.LogInformation("Replaced user {Email} permissions with {Count} permissions", email, permissions.Count);
+        }
+        return Task.CompletedTask;
+    }
+
+    public Task RemoveUserPermissionAsync(string email, string permission, CancellationToken ct)
+    {
+        if (_users.TryGetValue(email, out var user))
+        {
+            user.Permissions.Remove(permission);
+            _logger.LogInformation("Removed user {Email} permission {Permission}", email, permission);
         }
         return Task.CompletedTask;
     }
