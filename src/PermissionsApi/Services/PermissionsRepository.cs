@@ -22,11 +22,11 @@ public class PermissionsRepository(ILogger<PermissionsRepository> logger, IHisto
         return defaults;
     }
 
-    public async Task<Permission> CreatePermissionAsync(string name, string description, bool isDefault, CancellationToken ct)
+    public async Task<Permission> CreatePermissionAsync(string name, string description, bool isDefault, CancellationToken ct, string? principal = null, string? reason = null)
     {
         var permission = new Permission { Name = name, Description = description, IsDefault = isDefault };
         permissions[name] = permission;
-        await historyService.RecordChangeAsync("CREATE", "Permission", name, permission);
+        await historyService.RecordChangeAsync("CREATE", "Permission", name, permission, principal, reason);
         logger.LogInformation("Created permission {PermissionName} (IsDefault: {IsDefault})", name, isDefault);
         return permission;
     }
@@ -42,46 +42,48 @@ public class PermissionsRepository(ILogger<PermissionsRepository> logger, IHisto
         return Task.FromResult(permissions.Values.ToList());
     }
 
-    public async Task<bool> UpdatePermissionAsync(string name, string description, CancellationToken ct)
+    public async Task<bool> UpdatePermissionAsync(string name, string description, CancellationToken ct, string? principal = null, string? reason = null)
     {
         if (permissions.TryGetValue(name, out var permission))
         {
             var updatedPermission = permission with { Description = description };
             permissions[name] = updatedPermission;
-            await historyService.RecordChangeAsync("UPDATE", "Permission", name, updatedPermission);
+            await historyService.RecordChangeAsync("UPDATE", "Permission", name, updatedPermission, principal, reason);
             logger.LogInformation("Updated permission {PermissionName}", name);
             return true;
         }
         return false;
     }
 
-    public async Task<bool> DeletePermissionAsync(string name, CancellationToken ct)
+    public async Task<bool> DeletePermissionAsync(string name, CancellationToken ct, string? principal = null, string? reason = null)
     {
         var result = permissions.TryRemove(name, out var permission);
         if (result && permission != null)
         {
-            await historyService.RecordChangeAsync("DELETE", "Permission", name, permission);
+            await historyService.RecordChangeAsync("DELETE", "Permission", name, permission, principal, reason);
             logger.LogInformation("Deleted permission {PermissionName}", name);
         }
         return result;
     }
 
-    public Task<bool> SetPermissionDefaultAsync(string name, bool isDefault, CancellationToken ct)
+    public async Task<bool> SetPermissionDefaultAsync(string name, bool isDefault, CancellationToken ct, string? principal = null, string? reason = null)
     {
         if (permissions.TryGetValue(name, out var permission))
         {
-            permissions[name] = permission with { IsDefault = isDefault };
+            var updatedPermission = permission with { IsDefault = isDefault };
+            permissions[name] = updatedPermission;
+            await historyService.RecordChangeAsync("UPDATE", "Permission", name, updatedPermission, principal, reason);
             logger.LogInformation("Set permission {PermissionName} IsDefault to {IsDefault}", name, isDefault);
-            return Task.FromResult(true);
+            return true;
         }
-        return Task.FromResult(false);
+        return false;
     }
 
-    public async Task<Group> CreateGroupAsync(string name, CancellationToken ct)
+    public async Task<Group> CreateGroupAsync(string name, CancellationToken ct, string? principal = null, string? reason = null)
     {
         var group = new Group { Id = Guid.NewGuid().ToString(), Name = name };
         groups[group.Id] = group;
-        await historyService.RecordChangeAsync("CREATE", "Group", group.Id, group);
+        await historyService.RecordChangeAsync("CREATE", "Group", group.Id, group, principal, reason);
         logger.LogInformation("Created group {GroupId} with name {GroupName}", group.Id, name);
         return group;
     }
@@ -120,11 +122,11 @@ public class PermissionsRepository(ILogger<PermissionsRepository> logger, IHisto
         return Task.CompletedTask;
     }
 
-    public async Task<User> CreateUserAsync(string email, List<string> groupList, CancellationToken ct)
+    public async Task<User> CreateUserAsync(string email, List<string> groupList, CancellationToken ct, string? principal = null, string? reason = null)
     {
         var user = new User { Email = email, Groups = groupList };
         users[email] = user;
-        await historyService.RecordChangeAsync("CREATE", "User", email, user);
+        await historyService.RecordChangeAsync("CREATE", "User", email, user, principal, reason);
         logger.LogInformation("Created user {Email} with {GroupCount} groups", email, groupList.Count);
         return user;
     }

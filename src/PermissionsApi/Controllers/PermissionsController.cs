@@ -16,7 +16,7 @@ public class PermissionsController(
     public async Task<IActionResult> CreatePermission([FromBody] CreatePermissionRequest request, CancellationToken ct)
     {
         logger.LogInformation("Creating permission {PermissionName} (IsDefault: {IsDefault})", request.Name, request.IsDefault);
-        var permission = await repository.CreatePermissionAsync(request.Name, request.Description, request.IsDefault, ct);
+        var permission = await repository.CreatePermissionAsync(request.Name, request.Description, request.IsDefault, ct, request.Principal, request.Reason);
         return CreatedAtAction(nameof(GetPermission), new { name = permission.Name }, permission);
     }
 
@@ -43,7 +43,7 @@ public class PermissionsController(
     public async Task<IActionResult> UpdatePermission(string name, [FromBody] UpdatePermissionRequest request, CancellationToken ct)
     {
         logger.LogInformation("Updating permission {PermissionName}", name);
-        if (!await repository.UpdatePermissionAsync(name, request.Description, ct))
+        if (!await repository.UpdatePermissionAsync(name, request.Description, ct, request.Principal, request.Reason))
         {
             logger.LogWarning("Permission {PermissionName} not found for update", name);
             return NotFound();
@@ -132,7 +132,7 @@ public class PermissionsController(
     public async Task<IActionResult> CreateGroup([FromBody] CreateGroupRequest request, CancellationToken ct)
     {
         logger.LogInformation("Creating group {GroupName}", request.Name);
-        var group = await repository.CreateGroupAsync(request.Name, ct);
+        var group = await repository.CreateGroupAsync(request.Name, ct, request.Principal, request.Reason);
         return CreatedAtAction(nameof(CreateGroup), new { id = group.Id, name = group.Name });
     }
 
@@ -199,7 +199,7 @@ public class PermissionsController(
     public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest request, CancellationToken ct)
     {
         logger.LogInformation("Creating user {Email}", request.Email);
-        await repository.CreateUserAsync(request.Email, request.Groups, ct);
+        await repository.CreateUserAsync(request.Email, request.Groups, ct, request.Principal, request.Reason);
         return CreatedAtAction(nameof(CreateUser), null);
     }
 

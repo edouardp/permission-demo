@@ -5,7 +5,9 @@ public record HistoryEntry(
     string ChangeType,
     string EntityType,
     string EntityId,
-    object EntityAfterChange)
+    object EntityAfterChange,
+    string? Principal = null,
+    string? Reason = null)
 {
     public string Id { get; init; } = Guid.NewGuid().ToString();
 }

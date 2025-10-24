@@ -6,14 +6,16 @@ public class HistoryService(TimeProvider timeProvider) : IHistoryService
 {
     private readonly List<HistoryEntry> history = [];
 
-    public Task RecordChangeAsync(string changeType, string entityType, string entityId, object entityAfterChange)
+    public Task RecordChangeAsync(string changeType, string entityType, string entityId, object entityAfterChange, string? principal = null, string? reason = null)
     {
         var entry = new HistoryEntry(
             timeProvider.GetUtcNow().DateTime,
             changeType,
             entityType,
             entityId,
-            entityAfterChange);
+            entityAfterChange,
+            principal,
+            reason);
 
         history.Add(entry);
         return Task.CompletedTask;
