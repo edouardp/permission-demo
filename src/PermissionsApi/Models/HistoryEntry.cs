@@ -1,6 +1,9 @@
 namespace PermissionsApi.Models;
 
+#pragma warning disable IDE0060 // Remove unused parameter
+
 public record HistoryEntry(
+
     DateTime TimestampUtc,
     string ChangeType,
     string EntityType,
@@ -11,3 +14,5 @@ public record HistoryEntry(
 {
     public string Id { get; init; } = Guid.NewGuid().ToString();
 }
+
+#pragma warning restore IDE0060
