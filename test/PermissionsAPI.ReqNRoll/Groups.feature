@@ -109,9 +109,8 @@ Feature: Groups
 
     {
       "email": "{{USER_EMAIL}}",
-      "permissions": {
-        "read": false
-      }
+      "allow": [],
+      "deny": ["read"]
     }
     """
 
@@ -274,9 +273,8 @@ Feature: Groups
 
     {
       "email": "{{USER_EMAIL}}",
-      "permissions": {
-        "read": false
-      }
+      "allow": [],
+      "deny": ["read"]
     }
     """
 
@@ -304,9 +302,8 @@ Feature: Groups
 
     {
       "email": "{{USER_EMAIL}}",
-      "permissions": {
-        "read": true
-      }
+      "allow": ["read"],
+      "deny": []
     }
     """
 

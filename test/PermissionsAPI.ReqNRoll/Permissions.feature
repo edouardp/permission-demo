@@ -8,12 +8,12 @@ Feature: Permissions
     # AND the system SHALL allow deletion of the permission
     # AND the system SHALL return 404 when retrieving a deleted permission.
     
-    Given the variable 'PERM_NAME' is set to 'execute-{{GUID()}}'
+    Given the variable 'EXECUTE_PERMISSION' is set to 'execute-{{GUID()}}'
     
     # Verify permission doesn't exist yet
     Given the following request
     """
-    GET /api/v1/permissions/{{PERM_NAME}} HTTP/1.1
+    GET /api/v1/permissions/{{EXECUTE_PERMISSION}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -35,7 +35,7 @@ Feature: Permissions
     Content-Type: application/json
 
     {
-      "name": "{{PERM_NAME}}",
+      "name": "{{EXECUTE_PERMISSION}}",
       "description": "Allows execution of scripts",
       "isDefault": false
     }
@@ -47,7 +47,7 @@ Feature: Permissions
     Content-Type: application/json
 
     {
-      "name": "{{PERM_NAME}}",
+      "name": "{{EXECUTE_PERMISSION}}",
       "description": "Allows execution of scripts"
     }
     """
@@ -55,7 +55,7 @@ Feature: Permissions
     # Read the permission
     Given the following request
     """
-    GET /api/v1/permissions/{{PERM_NAME}} HTTP/1.1
+    GET /api/v1/permissions/{{EXECUTE_PERMISSION}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -64,7 +64,7 @@ Feature: Permissions
     Content-Type: application/json
 
     {
-      "name": "{{PERM_NAME}}",
+      "name": "{{EXECUTE_PERMISSION}}",
       "description": "Allows execution of scripts"
     }
     """
@@ -72,7 +72,7 @@ Feature: Permissions
     # Update the permission description
     Given the following request
     """
-    PUT /api/v1/permissions/{{PERM_NAME}} HTTP/1.1
+    PUT /api/v1/permissions/{{EXECUTE_PERMISSION}} HTTP/1.1
     Content-Type: application/json
 
     {
@@ -88,7 +88,7 @@ Feature: Permissions
     # Read the updated permission
     Given the following request
     """
-    GET /api/v1/permissions/{{PERM_NAME}} HTTP/1.1
+    GET /api/v1/permissions/{{EXECUTE_PERMISSION}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -97,7 +97,7 @@ Feature: Permissions
     Content-Type: application/json
 
     {
-      "name": "{{PERM_NAME}}",
+      "name": "{{EXECUTE_PERMISSION}}",
       "description": "Allows execution of scripts and commands"
     }
     """
@@ -105,7 +105,7 @@ Feature: Permissions
     # Delete the permission
     Given the following request
     """
-    DELETE /api/v1/permissions/{{PERM_NAME}} HTTP/1.1
+    DELETE /api/v1/permissions/{{EXECUTE_PERMISSION}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -116,7 +116,7 @@ Feature: Permissions
     # Verify permission is deleted (should return 404)
     Given the following request
     """
-    GET /api/v1/permissions/{{PERM_NAME}} HTTP/1.1
+    GET /api/v1/permissions/{{EXECUTE_PERMISSION}} HTTP/1.1
     """
 
     Then the API returns the following response

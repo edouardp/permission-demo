@@ -152,10 +152,8 @@ Feature: Users
 
     {
       "email": "{{USER_EMAIL}}",
-      "permissions": {
-        "read": true,
-        "write": true
-      }
+      "allow": ["read", "write"],
+      "deny": []
     }
     """
 
@@ -229,9 +227,8 @@ Feature: Users
 
     {
       "email": "{{USER_EMAIL}}",
-      "permissions": {
-        "read": false
-      }
+      "allow": [],
+      "deny": ["read"]
     }
     """
 
@@ -313,12 +310,8 @@ Feature: Users
 
     {
       "email": "{{USER_EMAIL}}",
-      "permissions": {
-        "read": true,
-        "write": true,
-        "delete": true,
-        "execute": false
-      }
+      "allow": ["delete", "read", "write"],
+      "deny": ["execute"]
     }
     """
 
@@ -544,10 +537,8 @@ Feature: Users
 
     {
       "email": "{{USER_EMAIL}}",
-      "permissions": {
-        "read": true,
-        "write": true
-      }
+      "allow": ["read", "write"],
+      "deny": []
     }
     """
 
@@ -575,9 +566,8 @@ Feature: Users
 
     {
       "email": "{{USER_EMAIL}}",
-      "permissions": {
-        "read": true
-      }
+      "allow": ["read"],
+      "deny": []
     }
     """
 
@@ -709,11 +699,8 @@ Feature: Users
 
     {
       "email": "{{USER_EMAIL}}",
-      "permissions": {
-        "read": true,
-        "write": true,
-        "delete": false
-      }
+      "allow": ["read", "write"],
+      "deny": ["delete"]
     }
     """
 
@@ -762,12 +749,8 @@ Feature: Users
 
     {
       "email": "{{USER_EMAIL}}",
-      "permissions": {
-        "read": true,
-        "write": true,
-        "delete": true,
-        "execute": false
-      }
+      "allow": ["delete", "read", "write"],
+      "deny": ["execute"]
     }
     """
 
@@ -795,11 +778,8 @@ Feature: Users
 
     {
       "email": "{{USER_EMAIL}}",
-      "permissions": {
-        "read": true,
-        "write": true,
-        "delete": true
-      }
+      "allow": ["delete", "read", "write"],
+      "deny": []
     }
     """
 

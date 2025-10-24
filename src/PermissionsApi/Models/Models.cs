@@ -51,7 +51,8 @@ public record CreateUserRequest
 public record PermissionsResponse
 {
     public required string Email { get; init; }
-    public Dictionary<string, bool> Permissions { get; init; } = new();
+    public List<string> Allow { get; init; } = [];
+    public List<string> Deny { get; init; } = [];
 }
 
 public record CreatePermissionRequest

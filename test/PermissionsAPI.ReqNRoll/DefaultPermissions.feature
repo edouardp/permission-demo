@@ -29,7 +29,7 @@ Feature: Default Permissions
     # WHEN a permission is created with isDefault set to true
     # THEN the system SHALL apply that permission to all users by default.
     
-    Given the variable 'PERM_NAME' is set to 'list-{{GUID()}}'
+    Given the variable 'LIST_PERMISSION' is set to 'list-{{GUID()}}'
     Given the variable 'USER_EMAIL' is set to 'user-{{GUID()}}@example.com'
 
     # Create a new permission as default
@@ -39,7 +39,7 @@ Feature: Default Permissions
     Content-Type: application/json
 
     {
-      "name": "{{PERM_NAME}}",
+      "name": "{{LIST_PERMISSION}}",
       "description": "List items permission",
       "isDefault": true
     }
@@ -51,7 +51,7 @@ Feature: Default Permissions
     Content-Type: application/json
 
     {
-      "name": "{{PERM_NAME}}",
+      "name": "{{LIST_PERMISSION}}",
       "isDefault": true
     }
     """
@@ -86,10 +86,8 @@ Feature: Default Permissions
 
     {
       "email": "{{USER_EMAIL}}",
-      "permissions": {
-        "read": true,
-        "{{PERM_NAME}}": true
-      }
+      "allow": ["{{LIST_PERMISSION}}", "read"],
+      "deny": []
     }
     """
 
@@ -107,7 +105,7 @@ Feature: Default Permissions
     # Cleanup
     Given the following request
     """
-    DELETE /api/v1/permissions/{{PERM_NAME}} HTTP/1.1
+    DELETE /api/v1/permissions/{{LIST_PERMISSION}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -119,7 +117,7 @@ Feature: Default Permissions
     # WHEN a permission's default status is changed
     # THEN the system SHALL update whether it applies to all users.
     
-    Given the variable 'PERM_NAME' is set to 'write-{{GUID()}}'
+    Given the variable 'WRITE_PERMISSION' is set to 'write-{{GUID()}}'
     Given the variable 'USER_EMAIL' is set to 'user-{{GUID()}}@example.com'
 
     # Create permission as non-default
@@ -129,7 +127,7 @@ Feature: Default Permissions
     Content-Type: application/json
 
     {
-      "name": "{{PERM_NAME}}",
+      "name": "{{WRITE_PERMISSION}}",
       "description": "Write permission",
       "isDefault": false
     }
@@ -140,7 +138,7 @@ Feature: Default Permissions
     HTTP/1.1 201 Created
 
     {
-      "name": "{{PERM_NAME}}",
+      "name": "{{WRITE_PERMISSION}}",
       "isDefault": false
     }
     """
@@ -174,16 +172,15 @@ Feature: Default Permissions
 
     {
       "email": "{{USER_EMAIL}}",
-      "permissions": {
-        "read": true
-      }
+      "allow": ["read"],
+      "deny": []
     }
     """
 
     # Set permission as default
     Given the following request
     """
-    PUT /api/v1/permissions/{{PERM_NAME}}/default HTTP/1.1
+    PUT /api/v1/permissions/{{WRITE_PERMISSION}}/default HTTP/1.1
     Content-Type: application/json
 
     true
@@ -206,17 +203,15 @@ Feature: Default Permissions
 
     {
       "email": "{{USER_EMAIL}}",
-      "permissions": {
-        "read": true,
-        "{{PERM_NAME}}": true
-      }
+      "allow": ["read", "{{WRITE_PERMISSION}}"],
+      "deny": []
     }
     """
 
     # Unset as default
     Given the following request
     """
-    PUT /api/v1/permissions/{{PERM_NAME}}/default HTTP/1.1
+    PUT /api/v1/permissions/{{WRITE_PERMISSION}}/default HTTP/1.1
     Content-Type: application/json
 
     false
@@ -239,9 +234,8 @@ Feature: Default Permissions
 
     {
       "email": "{{USER_EMAIL}}",
-      "permissions": {
-        "read": true
-      }
+      "allow": ["read"],
+      "deny": []
     }
     """
 
@@ -259,7 +253,7 @@ Feature: Default Permissions
     # Cleanup: Delete permission
     Given the following request
     """
-    DELETE /api/v1/permissions/{{PERM_NAME}} HTTP/1.1
+    DELETE /api/v1/permissions/{{WRITE_PERMISSION}} HTTP/1.1
     """
 
     Then the API returns the following response

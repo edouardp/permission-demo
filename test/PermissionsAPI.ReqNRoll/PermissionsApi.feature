@@ -118,9 +118,8 @@ Feature: Permissions API Integration
 
     {
       "email": "{{USER_EMAIL}}",
-      "permissions": {
-        "read": true
-      }
+      "allow": ["read"],
+      "deny": []
     }
     """
 
@@ -216,10 +215,8 @@ Feature: Permissions API Integration
 
     {
       "email": "{{USER_EMAIL}}",
-      "permissions": {
-        "read": true,
-        "write": true
-      }
+      "allow": ["read", "write"],
+      "deny": []
     }
     """
 
@@ -348,10 +345,8 @@ Feature: Permissions API Integration
 
     {
       "email": "{{USER_EMAIL}}",
-      "permissions": {
-        "read": true,
-        "delete": true
-      }
+      "allow": ["delete", "read"],
+      "deny": []
     }
     """
 
@@ -499,11 +494,8 @@ Feature: Permissions API Integration
 
     {
       "email": "{{USER_EMAIL}}",
-      "permissions": {
-        "read": true,
-        "write": true,
-        "delete": true
-      }
+      "allow": ["delete", "read", "write"],
+      "deny": []
     }
     """
 

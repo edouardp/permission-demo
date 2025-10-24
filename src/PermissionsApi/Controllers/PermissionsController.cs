@@ -90,7 +90,15 @@ public class PermissionsController : ControllerBase
             _logger.LogWarning("User {Email} not found", email);
             return NotFound();
         }
-        return Ok(new PermissionsResponse { Email = email, Permissions = permissions });
+
+        var response = new PermissionsResponse 
+        { 
+            Email = email,
+            Allow = permissions.Where(p => p.Value).Select(p => p.Key).OrderBy(p => p).ToList(),
+            Deny = permissions.Where(p => !p.Value).Select(p => p.Key).OrderBy(p => p).ToList()
+        };
+        
+        return Ok(response);
     }
 
     [HttpPost("groups")]
