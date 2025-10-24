@@ -14,14 +14,12 @@ public class HistoryService : IHistoryService
 
     public Task RecordChangeAsync(string changeType, string entityType, string entityId, object entityAfterChange)
     {
-        var entry = new HistoryEntry
-        {
-            TimestampUtc = _timeProvider.GetUtcNow().DateTime,
-            ChangeType = changeType,
-            EntityType = entityType,
-            EntityId = entityId,
-            EntityAfterChange = entityAfterChange
-        };
+        var entry = new HistoryEntry(
+            _timeProvider.GetUtcNow().DateTime,
+            changeType,
+            entityType,
+            entityId,
+            entityAfterChange);
 
         _history.Add(entry);
         return Task.CompletedTask;

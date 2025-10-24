@@ -1,6 +1,3 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using PermissionsApi.Services;
 using Serilog;
 using Serilog.Formatting.Compact;
@@ -26,8 +23,8 @@ namespace PermissionsApi
                 builder.Host.UseSerilog();
 
                 builder.Services.AddSingleton<IPermissionsRepository, PermissionsRepository>();
-builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
-builder.Services.AddSingleton<IHistoryService, HistoryService>();
+                builder.Services.AddSingleton(TimeProvider.System);
+                builder.Services.AddSingleton<IHistoryService, HistoryService>();
                 builder.Services.AddControllers();
                 builder.Services.AddEndpointsApiExplorer();
                 builder.Services.AddSwaggerGen();

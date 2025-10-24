@@ -5,19 +5,12 @@ namespace PermissionsApi.Controllers;
 
 [ApiController]
 [Route("api/v1/history")]
-public class HistoryController : ControllerBase
+public class HistoryController(IHistoryService historyService) : ControllerBase
 {
-    private readonly IHistoryService _historyService;
-
-    public HistoryController(IHistoryService historyService)
-    {
-        _historyService = historyService;
-    }
-
     [HttpGet]
     public async Task<IActionResult> GetHistory([FromQuery] int? skip = null, [FromQuery] int? count = null)
     {
-        var history = await _historyService.GetHistoryAsync(skip, count);
+        var history = await historyService.GetHistoryAsync(skip, count);
         return Ok(history);
     }
 }
