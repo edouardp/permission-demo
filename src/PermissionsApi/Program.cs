@@ -29,7 +29,18 @@ namespace PermissionsApi
                 builder.Services.AddSingleton<IHistoryService, HistoryService>();
                 builder.Services.AddControllers();
                 builder.Services.AddEndpointsApiExplorer();
-                builder.Services.AddSwaggerGen();
+                builder.Services.AddSwaggerGen(c =>
+                {
+                    c.SwaggerDoc("v1", new() { 
+                        Title = "Permissions API", 
+                        Version = "v1",
+                        Description = "A production-ready REST API for hierarchical permission management with comprehensive audit trails and debugging capabilities."
+                    });
+                    
+                    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                    c.IncludeXmlComments(xmlPath);
+                });
 
                 var app = builder.Build();
 

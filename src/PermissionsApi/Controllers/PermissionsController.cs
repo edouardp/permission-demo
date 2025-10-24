@@ -13,7 +13,17 @@ public class PermissionsController(
     ILogger<PermissionsController> logger)
     : ControllerBase
 {
+    /// <summary>
+    /// Creates a new permission with optional default status
+    /// </summary>
+    /// <param name="request">Permission details including name, description, and default status</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>The created permission</returns>
+    /// <response code="201">Permission created successfully</response>
+    /// <response code="400">Invalid request data</response>
     [HttpPost("permissions")]
+    [ProducesResponseType(typeof(Permission), 201)]
+    [ProducesResponseType(400)]
     public async Task<IActionResult> CreatePermission([FromBody] CreatePermissionRequest request, CancellationToken ct)
     {
         logger.LogInformation("Creating permission {PermissionName} (IsDefault: {IsDefault})", request.Name, request.IsDefault);
@@ -76,7 +86,17 @@ public class PermissionsController(
         return Ok();
     }
 
+    /// <summary>
+    /// Gets calculated permissions for a user, showing final allow/deny status after applying hierarchy
+    /// </summary>
+    /// <param name="email">User email address</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>User's calculated permissions with allow and deny lists</returns>
+    /// <response code="200">Permissions calculated successfully</response>
+    /// <response code="404">User not found</response>
     [HttpGet("users/{email}/permissions")]
+    [ProducesResponseType(typeof(PermissionsResponse), 200)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> GetPermissions(string email, CancellationToken ct)
     {
         var permissions = await repository.CalculatePermissionsAsync(email, ct);
@@ -96,7 +116,17 @@ public class PermissionsController(
         return Ok(response);
     }
 
+    /// <summary>
+    /// Debug permission resolution chain showing how each permission is calculated through Default → Group → User hierarchy
+    /// </summary>
+    /// <param name="email">User email address</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Detailed permission resolution chain for debugging</returns>
+    /// <response code="200">Debug information retrieved successfully</response>
+    /// <response code="404">User not found</response>
     [HttpGet("user/{email}/debug")]
+    [ProducesResponseType(typeof(PermissionDebugResponse), 200)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> GetUserPermissionsDebug(string email, CancellationToken ct)
     {
         var debug = await repository.CalculatePermissionsDebugAsync(email, ct);
