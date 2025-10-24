@@ -27,33 +27,25 @@ public record PermissionRequest
     public required string Access { get; init; }
 }
 
-public record PermissionAccessRequest
+public record PermissionAccessRequest : AuditableRequest
 {
     public required string Access { get; init; }
-    public string? Principal { get; init; }
-    public string? Reason { get; init; }
 }
 
-public record BatchPermissionRequest
+public record BatchPermissionRequest : AuditableRequest
 {
     public required List<PermissionRequest> Permissions { get; init; } = [];
-    public string? Principal { get; init; }
-    public string? Reason { get; init; }
 }
 
-public record CreateGroupRequest
+public record CreateGroupRequest : AuditableRequest
 {
     public required string Name { get; init; }
-    public string? Principal { get; init; }
-    public string? Reason { get; init; }
 }
 
-public record CreateUserRequest
+public record CreateUserRequest : AuditableRequest
 {
     public required string Email { get; init; }
     public List<string> Groups { get; init; } = [];
-    public string? Principal { get; init; }
-    public string? Reason { get; init; }
 }
 
 public record PermissionsResponse
@@ -63,18 +55,14 @@ public record PermissionsResponse
     public List<string> Deny { get; init; } = [];
 }
 
-public record CreatePermissionRequest
+public record CreatePermissionRequest : AuditableRequest
 {
     public required string Name { get; init; }
     public required string Description { get; init; }
     public bool IsDefault { get; init; }
-    public string? Principal { get; init; }
-    public string? Reason { get; init; }
 }
 
-public record UpdatePermissionRequest
+public record UpdatePermissionRequest : AuditableRequest
 {
     public required string Description { get; init; }
-    public string? Principal { get; init; }
-    public string? Reason { get; init; }
 }
