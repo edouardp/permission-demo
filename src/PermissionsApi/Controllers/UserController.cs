@@ -56,6 +56,15 @@ public class UserController(
     [ProducesResponseType(400)]
     public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest request, CancellationToken ct)
     {
+        if (!EmailValidator.IsValid(request.Email))
+        {
+            return Problem(
+                title: "Invalid Email",
+                detail: EmailValidator.ValidationRules,
+                statusCode: 400
+            );
+        }
+
         logger.LogInformation("Creating user {Email}", request.Email);
         await repository.CreateUserAsync(request.Email, request.Groups, ct, request.Principal, request.Reason);
         return CreatedAtAction(nameof(CreateUser), null);

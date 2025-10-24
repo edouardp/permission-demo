@@ -4,35 +4,10 @@ namespace PermissionsApi.Services;
 
 public static partial class PermissionNameValidator
 {
-    [GeneratedRegex("^[A-Za-z0-9:-]+$", RegexOptions.Compiled)]
-    private static partial Regex ValidCharactersRegex();
+    public const string ValidationRules = "Permission name must contain only alphanumeric characters, hyphens, and colons (A-Za-z0-9:-). Cannot start or end with : or -. Cannot contain consecutive colons. Cannot have - adjacent to :.";
 
-    [GeneratedRegex(":{2,}", RegexOptions.Compiled)]
-    private static partial Regex MultipleColonsRegex();
+    [GeneratedRegex("^(?![-:])(?!.*::)(?!.*-:)(?!.*:-)(?!.*[-:]$)[A-Za-z0-9:-]+$", RegexOptions.Compiled)]
+    private static partial Regex ValidationRegex();
 
-    [GeneratedRegex("-:|:-", RegexOptions.Compiled)]
-    private static partial Regex HyphenColonAdjacentRegex();
-
-    public static bool IsValid(string name)
-    {
-        if (string.IsNullOrEmpty(name))
-            return false;
-
-        if (!ValidCharactersRegex().IsMatch(name))
-            return false;
-
-        if (name.StartsWith(':') || name.StartsWith('-'))
-            return false;
-
-        if (name.EndsWith(':') || name.EndsWith('-'))
-            return false;
-
-        if (MultipleColonsRegex().IsMatch(name))
-            return false;
-
-        if (HyphenColonAdjacentRegex().IsMatch(name))
-            return false;
-
-        return true;
-    }
+    public static bool IsValid(string name) => !string.IsNullOrEmpty(name) && ValidationRegex().IsMatch(name);
 }

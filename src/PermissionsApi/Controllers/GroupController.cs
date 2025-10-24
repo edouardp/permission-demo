@@ -26,6 +26,15 @@ public class GroupController(
     [ProducesResponseType(400)]
     public async Task<IActionResult> CreateGroup([FromBody] CreateGroupRequest request, CancellationToken ct)
     {
+        if (!GroupNameValidator.IsValid(request.Name))
+        {
+            return Problem(
+                title: "Invalid Group Name",
+                detail: GroupNameValidator.ValidationRules,
+                statusCode: 400
+            );
+        }
+
         logger.LogInformation("Creating group {GroupName}", request.Name);
         var group = await repository.CreateGroupAsync(request.Name, ct, request.Principal, request.Reason);
         return CreatedAtAction(nameof(CreateGroup), new { id = group.Id, name = group.Name });

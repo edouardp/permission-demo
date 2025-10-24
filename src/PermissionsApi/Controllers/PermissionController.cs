@@ -30,7 +30,7 @@ public class PermissionController(
         {
             return Problem(
                 title: "Invalid Permission Name",
-                detail: "Permission name must contain only alphanumeric characters, hyphens, and colons (A-Za-z0-9:-). Cannot start or end with : or -. Cannot contain consecutive colons. Cannot have - adjacent to :.",
+                detail: PermissionNameValidator.ValidationRules,
                 statusCode: 400
             );
         }
