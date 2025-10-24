@@ -26,6 +26,15 @@ public class PermissionController(
     [ProducesResponseType(400)]
     public async Task<IActionResult> CreatePermission([FromBody] CreatePermissionRequest request, CancellationToken ct)
     {
+        if (!PermissionNameValidator.IsValid(request.Name))
+        {
+            return Problem(
+                title: "Invalid Permission Name",
+                detail: "Permission name must contain only alphanumeric characters, hyphens, and colons (A-Za-z0-9:-). Cannot start or end with : or -. Cannot contain consecutive colons. Cannot have - adjacent to :.",
+                statusCode: 400
+            );
+        }
+
         logger.LogInformation("Creating permission {PermissionName} (IsDefault: {IsDefault})", request.Name, request.IsDefault);
         var permission = await repository.CreatePermissionAsync(request.Name, request.Description, request.IsDefault, ct, request.Principal, request.Reason);
         return CreatedAtAction(nameof(GetPermission), new { name = permission.Name }, permission);

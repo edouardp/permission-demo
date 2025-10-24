@@ -374,9 +374,9 @@ Feature: History Tracking
     # WHEN requesting history with paging parameters
     # THEN the system SHALL return the specified subset of results
     
-    Given the variable 'PAGE_PERM1' is set to 'page1-{{GUID()}}'
-    Given the variable 'PAGE_PERM2' is set to 'page2-{{GUID()}}'
-    Given the variable 'PAGE_PERM3' is set to 'page3-{{GUID()}}'
+    Given the variable 'PAGE_PERM1' is set to 'page:one:{{GUID()}}'
+    Given the variable 'PAGE_PERM2' is set to 'page:two:{{GUID()}}'
+    Given the variable 'PAGE_PERM3' is set to 'page:three:{{GUID()}}'
 
     # Create multiple permissions to have enough history entries
     Given the following request

@@ -29,7 +29,7 @@ Feature: Default Permissions
     # WHEN a permission is created with isDefault set to true
     # THEN the system SHALL apply that permission to all users by default.
     
-    Given the variable 'LIST_PERMISSION' is set to 'list-{{GUID()}}'
+    Given the variable 'LIST_PERMISSION' is set to 'list:{{GUID()}}'
     Given the variable 'USER_EMAIL' is set to 'user-{{GUID()}}@example.com'
 
     # Create a new permission as default
@@ -117,7 +117,7 @@ Feature: Default Permissions
     # WHEN a permission's default status is changed
     # THEN the system SHALL update whether it applies to all users.
     
-    Given the variable 'WRITE_PERMISSION' is set to 'write-{{GUID()}}'
+    Given the variable 'WRITE_PERMISSION' is set to 'write:{{GUID()}}'
     Given the variable 'USER_EMAIL' is set to 'user-{{GUID()}}@example.com'
 
     # Create permission as non-default

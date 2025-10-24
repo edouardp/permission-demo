@@ -28,8 +28,8 @@ Feature: Permission Debug Endpoint
   Scenario: Debug complex permission chain with defaults, groups, and user overrides
     # Test the permission resolution chain: Default → Group → User
     
-    Given the variable 'WRITE_PERMISSION' is set to 'write-{{GUID()}}'
-    Given the variable 'DELETE_PERMISSION' is set to 'delete-{{GUID()}}'
+    Given the variable 'WRITE_PERMISSION' is set to 'write:{{GUID()}}'
+    Given the variable 'DELETE_PERMISSION' is set to 'delete:{{GUID()}}'
     Given the variable 'ADMIN_GROUP' is set to 'admin-{{GUID()}}'
     Given the variable 'USER_EMAIL' is set to 'user-{{GUID()}}@example.com'
 

@@ -8,7 +8,7 @@ Feature: Permissions
     # AND the system SHALL allow deletion of the permission
     # AND the system SHALL return 404 when retrieving a deleted permission.
     
-    Given the variable 'EXECUTE_PERMISSION' is set to 'execute-{{GUID()}}'
+    Given the variable 'EXECUTE_PERMISSION' is set to 'execute:{{GUID()}}'
     
     # Verify permission doesn't exist yet
     Given the following request

@@ -135,6 +135,7 @@ Feature: Groups
     """
     HTTP/1.1 204 NoContent
     """
+    
   Scenario: Setting non-existent permission on group returns error
     # WHEN attempting to set a permission that doesn't exist on a group
     # THEN the system SHALL return an error response
@@ -328,6 +329,7 @@ Feature: Groups
     """
     HTTP/1.1 204 NoContent
     """
+    
   Scenario: Setting individual non-existent permission on group returns error
     # WHEN attempting to set an individual permission that doesn't exist on a group
     # THEN the system SHALL return an error response
