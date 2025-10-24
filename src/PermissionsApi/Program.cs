@@ -26,6 +26,8 @@ namespace PermissionsApi
                 builder.Host.UseSerilog();
 
                 builder.Services.AddSingleton<IPermissionsRepository, PermissionsRepository>();
+builder.Services.AddSingleton<TimeProvider>(TimeProvider.System);
+builder.Services.AddSingleton<IHistoryService, HistoryService>();
                 builder.Services.AddControllers();
                 builder.Services.AddEndpointsApiExplorer();
                 builder.Services.AddSwaggerGen();

@@ -24,13 +24,14 @@ badd +5 src/PermissionsApi/Services/PermissionsRepository.cs
 badd +22 src/PermissionsApi/Services/IPermissionsRepository.cs
 badd +1 src/PermissionsApi/Models/Models.cs
 badd +0 ~/notes
-badd +82 test/PermissionsAPI.ReqNRoll/Groups.feature
+badd +131 test/PermissionsAPI.ReqNRoll/Groups.feature
 badd +82 test/PermissionsAPI.ReqNRoll/DefaultPermissions.feature
-badd +239 test/PermissionsAPI.ReqNRoll/Users.feature
-badd +0 test/PermissionsAPI.ReqNRoll/DEBUG.feature
+badd +124 test/PermissionsAPI.ReqNRoll/Users.feature
+badd +16 test/PermissionsAPI.ReqNRoll/DEBUG.feature
+badd +77 test/PermissionsAPI.ReqNRoll/History.feature
 argglobal
 %argdel
-edit test/PermissionsAPI.ReqNRoll/DEBUG.feature
+edit test/PermissionsAPI.ReqNRoll/History.feature
 let s:save_splitbelow = &splitbelow
 let s:save_splitright = &splitright
 set splitbelow splitright
@@ -44,7 +45,7 @@ set winheight=1
 set winminwidth=0
 set winwidth=1
 argglobal
-balt test/PermissionsAPI.ReqNRoll/Users.feature
+balt test/PermissionsAPI.ReqNRoll/Groups.feature
 setlocal fdm=manual
 setlocal fde=0
 setlocal fmr={{{,}}}

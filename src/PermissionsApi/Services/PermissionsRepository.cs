@@ -10,10 +10,12 @@ public class PermissionsRepository : IPermissionsRepository
     private readonly ConcurrentDictionary<string, Group> _groups = new();
     private readonly ConcurrentDictionary<string, User> _users = new();
     private readonly ILogger<PermissionsRepository> _logger;
+    private readonly IHistoryService _historyService;
 
-    public PermissionsRepository(ILogger<PermissionsRepository> logger)
+    public PermissionsRepository(ILogger<PermissionsRepository> logger, IHistoryService historyService)
     {
         _logger = logger;
+        _historyService = historyService;
     }
 
     private Dictionary<string, bool> GetDefaultPermissions()
@@ -28,12 +30,13 @@ public class PermissionsRepository : IPermissionsRepository
         return defaults;
     }
 
-    public Task<Permission> CreatePermissionAsync(string name, string description, bool isDefault, CancellationToken ct)
+    public async Task<Permission> CreatePermissionAsync(string name, string description, bool isDefault, CancellationToken ct)
     {
         var permission = new Permission { Name = name, Description = description, IsDefault = isDefault };
         _permissions[name] = permission;
+        await _historyService.RecordChangeAsync("CREATE", "Permission", name, permission);
         _logger.LogInformation("Created permission {PermissionName} (IsDefault: {IsDefault})", name, isDefault);
-        return Task.FromResult(permission);
+        return permission;
     }
 
     public Task<Permission?> GetPermissionAsync(string name, CancellationToken ct)
@@ -47,23 +50,28 @@ public class PermissionsRepository : IPermissionsRepository
         return Task.FromResult(_permissions.Values.ToList());
     }
 
-    public Task<bool> UpdatePermissionAsync(string name, string description, CancellationToken ct)
+    public async Task<bool> UpdatePermissionAsync(string name, string description, CancellationToken ct)
     {
         if (_permissions.TryGetValue(name, out var permission))
         {
-            _permissions[name] = permission with { Description = description };
+            var updatedPermission = permission with { Description = description };
+            _permissions[name] = updatedPermission;
+            await _historyService.RecordChangeAsync("UPDATE", "Permission", name, updatedPermission);
             _logger.LogInformation("Updated permission {PermissionName}", name);
-            return Task.FromResult(true);
+            return true;
         }
-        return Task.FromResult(false);
+        return false;
     }
 
-    public Task<bool> DeletePermissionAsync(string name, CancellationToken ct)
+    public async Task<bool> DeletePermissionAsync(string name, CancellationToken ct)
     {
-        var result = _permissions.TryRemove(name, out _);
-        if (result)
+        var result = _permissions.TryRemove(name, out var permission);
+        if (result && permission != null)
+        {
+            await _historyService.RecordChangeAsync("DELETE", "Permission", name, permission);
             _logger.LogInformation("Deleted permission {PermissionName}", name);
-        return Task.FromResult(result);
+        }
+        return result;
     }
 
     public Task<bool> SetPermissionDefaultAsync(string name, bool isDefault, CancellationToken ct)
@@ -77,12 +85,13 @@ public class PermissionsRepository : IPermissionsRepository
         return Task.FromResult(false);
     }
 
-    public Task<Group> CreateGroupAsync(string name, CancellationToken ct)
+    public async Task<Group> CreateGroupAsync(string name, CancellationToken ct)
     {
         var group = new Group { Id = Guid.NewGuid().ToString(), Name = name };
         _groups[group.Id] = group;
+        await _historyService.RecordChangeAsync("CREATE", "Group", group.Id, group);
         _logger.LogInformation("Created group {GroupId} with name {GroupName}", group.Id, name);
-        return Task.FromResult(group);
+        return group;
     }
 
     public Task SetGroupPermissionAsync(string groupId, string permission, string access, CancellationToken ct)
@@ -119,12 +128,13 @@ public class PermissionsRepository : IPermissionsRepository
         return Task.CompletedTask;
     }
 
-    public Task<User> CreateUserAsync(string email, List<string> groups, CancellationToken ct)
+    public async Task<User> CreateUserAsync(string email, List<string> groups, CancellationToken ct)
     {
         var user = new User { Email = email, Groups = groups };
         _users[email] = user;
+        await _historyService.RecordChangeAsync("CREATE", "User", email, user);
         _logger.LogInformation("Created user {Email} with {GroupCount} groups", email, groups.Count);
-        return Task.FromResult(user);
+        return user;
     }
 
     public Task SetUserPermissionAsync(string email, string permission, string access, CancellationToken ct)

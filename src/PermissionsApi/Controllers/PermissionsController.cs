@@ -10,11 +10,13 @@ namespace PermissionsApi.Controllers;
 public class PermissionsController : ControllerBase
 {
     private readonly IPermissionsRepository _repository;
+    private readonly IHistoryService _historyService;
     private readonly ILogger<PermissionsController> _logger;
 
-    public PermissionsController(IPermissionsRepository repository, ILogger<PermissionsController> logger)
+    public PermissionsController(IPermissionsRepository repository, IHistoryService historyService, ILogger<PermissionsController> logger)
     {
         _repository = repository;
+        _historyService = historyService;
         _logger = logger;
     }
 
@@ -111,6 +113,27 @@ public class PermissionsController : ControllerBase
         }
 
         return Ok(debug);
+    }
+
+    [HttpGet("permissions/{name}/history")]
+    public async Task<IActionResult> GetPermissionHistory(string name)
+    {
+        var history = await _historyService.GetEntityHistoryAsync("Permission", name);
+        return Ok(history);
+    }
+
+    [HttpGet("users/{email}/history")]
+    public async Task<IActionResult> GetUserHistory(string email)
+    {
+        var history = await _historyService.GetEntityHistoryAsync("User", email);
+        return Ok(history);
+    }
+
+    [HttpGet("groups/{id}/history")]
+    public async Task<IActionResult> GetGroupHistory(string id)
+    {
+        var history = await _historyService.GetEntityHistoryAsync("Group", id);
+        return Ok(history);
     }
 
     [HttpPost("groups")]
