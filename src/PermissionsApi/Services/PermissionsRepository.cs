@@ -174,16 +174,19 @@ public class PermissionsRepository(ILogger<PermissionsRepository> logger, IHisto
         }
 
         var result = GetDefaultPermissions();
-        var userGroups = user.Groups.ToList();
         
-        foreach (var groupId in userGroups)
+        // Sort groups alphabetically by name for consistent ordering (last wins)
+        var sortedGroups = user.Groups
+            .Select(groupId => groups.TryGetValue(groupId, out var g) ? g : null)
+            .Where(g => g != null)
+            .OrderBy(g => g!.Name)
+            .ToList();
+        
+        foreach (var group in sortedGroups)
         {
-            if (groups.TryGetValue(groupId, out var group))
+            foreach (var perm in group!.Permissions.ToList())
             {
-                foreach (var perm in group.Permissions.ToList())
-                {
-                    result[perm.Key] = perm.Value == PermissionAccess.Allow;
-                }
+                result[perm.Key] = perm.Value == PermissionAccess.Allow;
             }
         }
 
@@ -207,12 +210,16 @@ public class PermissionsRepository(ILogger<PermissionsRepository> logger, IHisto
         var defaultPerms = GetDefaultPermissions();
         allPermissions.UnionWith(defaultPerms.Keys);
         
-        foreach (var groupId in user.Groups)
+        // Sort groups alphabetically by name for consistent ordering
+        var sortedGroups = user.Groups
+            .Select(groupId => groups.TryGetValue(groupId, out var g) ? g : null)
+            .Where(g => g != null)
+            .OrderBy(g => g!.Name)
+            .ToList();
+        
+        foreach (var group in sortedGroups)
         {
-            if (groups.TryGetValue(groupId, out var group))
-            {
-                allPermissions.UnionWith(group.Permissions.Keys);
-            }
+            allPermissions.UnionWith(group!.Permissions.Keys);
         }
         allPermissions.UnionWith(user.Permissions.Keys);
 
@@ -244,10 +251,10 @@ public class PermissionsRepository(ILogger<PermissionsRepository> logger, IHisto
                 });
             }
 
-            // Group level
-            foreach (var groupId in user.Groups)
+            // Group level - process in alphabetical order
+            foreach (var group in sortedGroups)
             {
-                if (groups.TryGetValue(groupId, out var group) && group.Permissions.TryGetValue(permission, out var groupAccess))
+                if (group!.Permissions.TryGetValue(permission, out var groupAccess))
                 {
                     chain.Add(new PermissionDebugStep
                     {
