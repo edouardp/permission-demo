@@ -21,8 +21,8 @@ public class PermissionsController : ControllerBase
     [HttpPost("permissions")]
     public async Task<IActionResult> CreatePermission([FromBody] CreatePermissionRequest request, CancellationToken ct)
     {
-        _logger.LogInformation("Creating permission {PermissionName}", request.Name);
-        var permission = await _repository.CreatePermissionAsync(request.Name, request.Description, ct);
+        _logger.LogInformation("Creating permission {PermissionName} (IsDefault: {IsDefault})", request.Name, request.IsDefault);
+        var permission = await _repository.CreatePermissionAsync(request.Name, request.Description, request.IsDefault, ct);
         return CreatedAtAction(nameof(GetPermission), new { name = permission.Name }, permission);
     }
 
@@ -69,10 +69,27 @@ public class PermissionsController : ControllerBase
         return NoContent();
     }
 
+    [HttpPut("permissions/{name}/default")]
+    public async Task<IActionResult> SetPermissionDefault(string name, [FromBody] bool isDefault, CancellationToken ct)
+    {
+        _logger.LogInformation("Setting permission {PermissionName} IsDefault to {IsDefault}", name, isDefault);
+        if (!await _repository.SetPermissionDefaultAsync(name, isDefault, ct))
+        {
+            _logger.LogWarning("Permission {PermissionName} not found", name);
+            return NotFound();
+        }
+        return Ok();
+    }
+
     [HttpGet("permissions/user/{email}")]
     public async Task<IActionResult> GetPermissions(string email, CancellationToken ct)
     {
         var permissions = await _repository.CalculatePermissionsAsync(email, ct);
+        if (permissions == null)
+        {
+            _logger.LogWarning("User {Email} not found", email);
+            return NotFound();
+        }
         return Ok(new PermissionsResponse { Email = email, Permissions = permissions });
     }
 

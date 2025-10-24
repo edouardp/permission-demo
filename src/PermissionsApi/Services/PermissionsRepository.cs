@@ -9,7 +9,6 @@ public class PermissionsRepository : IPermissionsRepository
     private readonly ConcurrentDictionary<string, Permission> _permissions = new();
     private readonly ConcurrentDictionary<string, Group> _groups = new();
     private readonly ConcurrentDictionary<string, User> _users = new();
-    private readonly Dictionary<string, bool> _defaultPermissions = new() { { "read", true } };
     private readonly ILogger<PermissionsRepository> _logger;
 
     public PermissionsRepository(ILogger<PermissionsRepository> logger)
@@ -17,11 +16,23 @@ public class PermissionsRepository : IPermissionsRepository
         _logger = logger;
     }
 
-    public Task<Permission> CreatePermissionAsync(string name, string description, CancellationToken ct)
+    private Dictionary<string, bool> GetDefaultPermissions()
     {
-        var permission = new Permission { Name = name, Description = description };
+        var defaults = new Dictionary<string, bool>();
+        
+        foreach (var permission in _permissions.Values.Where(p => p.IsDefault))
+        {
+            defaults[permission.Name] = true;
+        }
+        
+        return defaults;
+    }
+
+    public Task<Permission> CreatePermissionAsync(string name, string description, bool isDefault, CancellationToken ct)
+    {
+        var permission = new Permission { Name = name, Description = description, IsDefault = isDefault };
         _permissions[name] = permission;
-        _logger.LogInformation("Created permission {PermissionName}", name);
+        _logger.LogInformation("Created permission {PermissionName} (IsDefault: {IsDefault})", name, isDefault);
         return Task.FromResult(permission);
     }
 
@@ -53,6 +64,17 @@ public class PermissionsRepository : IPermissionsRepository
         if (result)
             _logger.LogInformation("Deleted permission {PermissionName}", name);
         return Task.FromResult(result);
+    }
+
+    public Task<bool> SetPermissionDefaultAsync(string name, bool isDefault, CancellationToken ct)
+    {
+        if (_permissions.TryGetValue(name, out var permission))
+        {
+            _permissions[name] = permission with { IsDefault = isDefault };
+            _logger.LogInformation("Set permission {PermissionName} IsDefault to {IsDefault}", name, isDefault);
+            return Task.FromResult(true);
+        }
+        return Task.FromResult(false);
     }
 
     public Task<Group> CreateGroupAsync(string name, CancellationToken ct)
@@ -91,38 +113,35 @@ public class PermissionsRepository : IPermissionsRepository
         return Task.CompletedTask;
     }
 
-    public Task<Dictionary<string, bool>> CalculatePermissionsAsync(string email, CancellationToken ct)
+    public Task<Dictionary<string, bool>?> CalculatePermissionsAsync(string email, CancellationToken ct)
     {
-        var result = new Dictionary<string, bool>(_defaultPermissions);
-
-        if (_users.TryGetValue(email, out var user))
+        if (!_users.TryGetValue(email, out var user))
         {
-            var userGroups = user.Groups.ToList();
-            
-            foreach (var groupId in userGroups)
+            _logger.LogDebug("User {Email} not found", email);
+            return Task.FromResult<Dictionary<string, bool>?>(null);
+        }
+
+        var result = GetDefaultPermissions();
+        var userGroups = user.Groups.ToList();
+        
+        foreach (var groupId in userGroups)
+        {
+            if (_groups.TryGetValue(groupId, out var group))
             {
-                if (_groups.TryGetValue(groupId, out var group))
+                foreach (var perm in group.Permissions.ToList())
                 {
-                    foreach (var perm in group.Permissions.ToList())
-                    {
-                        result[perm.Key] = perm.Value == "ALLOW";
-                    }
+                    result[perm.Key] = perm.Value == "ALLOW";
                 }
             }
-
-            foreach (var perm in user.Permissions.ToList())
-            {
-                result[perm.Key] = perm.Value == "ALLOW";
-            }
-            
-            _logger.LogDebug("Calculated {PermissionCount} permissions for user {Email}", result.Count, email);
         }
-        else
+
+        foreach (var perm in user.Permissions.ToList())
         {
-            _logger.LogDebug("User {Email} not found, returning default permissions", email);
+            result[perm.Key] = perm.Value == "ALLOW";
         }
-
-        return Task.FromResult(result);
+        
+        _logger.LogDebug("Calculated {PermissionCount} permissions for user {Email}", result.Count, email);
+        return Task.FromResult<Dictionary<string, bool>?>(result);
     }
 
     public Task DeleteUserAsync(string email, CancellationToken ct)

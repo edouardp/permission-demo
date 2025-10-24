@@ -4,6 +4,7 @@ public record Permission
 {
     public required string Name { get; init; }
     public required string Description { get; init; }
+    public bool IsDefault { get; init; }
 }
 
 public record Group
@@ -47,6 +48,7 @@ public record CreatePermissionRequest
 {
     public required string Name { get; init; }
     public required string Description { get; init; }
+    public bool IsDefault { get; init; }
 }
 
 public record UpdatePermissionRequest
