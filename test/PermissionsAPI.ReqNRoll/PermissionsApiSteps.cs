@@ -8,9 +8,7 @@ public class TestWebApplicationFactory : WebApplicationFactory<PermissionsApi.Pr
 {
     protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
     {
-        builder.UseSetting("Logging:LogLevel:Default", "Warning");
-        builder.UseSetting("Logging:LogLevel:Microsoft", "Warning");
-        builder.UseSetting("Logging:LogLevel:Microsoft.AspNetCore", "Warning");
+        PermissionsApi.Program.LevelSwitch.MinimumLevel = Serilog.Events.LogEventLevel.Fatal;
     }
 }
 

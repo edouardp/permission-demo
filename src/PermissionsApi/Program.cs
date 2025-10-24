@@ -1,5 +1,7 @@
 using PermissionsApi.Services;
 using Serilog;
+using Serilog.Core;
+using Serilog.Events;
 using Serilog.Formatting.Compact;
 
 namespace PermissionsApi
@@ -8,13 +10,21 @@ namespace PermissionsApi
     {
         private Program() { } // Private constructor to satisfy S1118
         
+        public static readonly LoggingLevelSwitch LevelSwitch = new();
+        
         public static void Main(string[] args)
         {
             Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.ControlledBy(LevelSwitch)
                 .WriteTo.Console(new CompactJsonFormatter())
                 .Enrich.FromLogContext()
                 .Enrich.WithProperty("Application", "PermissionsApi")
                 .CreateLogger();
+
+            if (Environment.GetEnvironmentVariable("SUPPRESS_LOGGING") == "true")
+            {
+                LevelSwitch.MinimumLevel = LogEventLevel.Fatal;
+            }
 
             try
             {
