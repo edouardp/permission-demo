@@ -20,7 +20,7 @@ public class GroupController(
     /// <param name="ct">Cancellation token</param>
     /// <returns>The created group with generated ID</returns>
     /// <response code="201">Group created successfully</response>
-    /// <response code="400">Invalid request data</response>
+    /// <response code="400">Invalid request data. Response is RFC 9457 Problem Details JSON.</response>
     [HttpPost]
     [ProducesResponseType(typeof(Group), 201)]
     [ProducesResponseType(400)]
@@ -39,7 +39,7 @@ public class GroupController(
     /// <param name="ct">Cancellation token</param>
     /// <returns>Success status</returns>
     /// <response code="200">Group permissions updated successfully</response>
-    /// <response code="400">Invalid permissions or request data</response>
+    /// <response code="400">Invalid permissions or request data. Response is RFC 9457 Problem Details JSON.</response>
     [HttpPut("{groupId}/permissions")]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
@@ -84,7 +84,7 @@ public class GroupController(
     /// <param name="ct">Cancellation token</param>
     /// <returns>Success status</returns>
     /// <response code="200">Group permission set successfully</response>
-    /// <response code="400">Invalid permission or request data</response>
+    /// <response code="400">Invalid permission or request data. Response is RFC 9457 Problem Details JSON.</response>
     [HttpPut("{groupId}/permissions/{permissionName}")]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]

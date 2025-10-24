@@ -20,7 +20,7 @@ public class UserController(
     /// <param name="ct">Cancellation token</param>
     /// <returns>User's calculated permissions with allow and deny lists</returns>
     /// <response code="200">Permissions calculated successfully</response>
-    /// <response code="404">User not found</response>
+    /// <response code="404">User not found. Response is RFC 9457 Problem Details JSON.</response>
     [HttpGet("{email}/permissions")]
     [ProducesResponseType(typeof(PermissionsResponse), 200)]
     [ProducesResponseType(404)]
@@ -50,7 +50,7 @@ public class UserController(
     /// <param name="ct">Cancellation token</param>
     /// <returns>Success status</returns>
     /// <response code="201">User created successfully</response>
-    /// <response code="400">Invalid request data</response>
+    /// <response code="400">Invalid request data. Response is RFC 9457 Problem Details JSON.</response>
     [HttpPost]
     [ProducesResponseType(201)]
     [ProducesResponseType(400)]
@@ -69,7 +69,7 @@ public class UserController(
     /// <param name="ct">Cancellation token</param>
     /// <returns>Success status</returns>
     /// <response code="200">User permissions updated successfully</response>
-    /// <response code="400">Invalid permissions or request data</response>
+    /// <response code="400">Invalid permissions or request data. Response is RFC 9457 Problem Details JSON.</response>
     [HttpPut("{email}/permissions")]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]
@@ -114,7 +114,7 @@ public class UserController(
     /// <param name="ct">Cancellation token</param>
     /// <returns>Success status</returns>
     /// <response code="200">User permission set successfully</response>
-    /// <response code="400">Invalid permission or request data</response>
+    /// <response code="400">Invalid permission or request data. Response is RFC 9457 Problem Details JSON.</response>
     [HttpPut("{email}/permissions/{permissionName}")]
     [ProducesResponseType(200)]
     [ProducesResponseType(400)]

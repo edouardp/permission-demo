@@ -20,7 +20,7 @@ public class PermissionController(
     /// <param name="ct">Cancellation token</param>
     /// <returns>The created permission</returns>
     /// <response code="201">Permission created successfully</response>
-    /// <response code="400">Invalid request data</response>
+    /// <response code="400">Invalid request data. Response is RFC 9457 Problem Details JSON.</response>
     [HttpPost("permissions")]
     [ProducesResponseType(typeof(Permission), 201)]
     [ProducesResponseType(400)]
@@ -52,7 +52,7 @@ public class PermissionController(
     /// <param name="ct">Cancellation token</param>
     /// <returns>The requested permission</returns>
     /// <response code="200">Permission found</response>
-    /// <response code="404">Permission not found</response>
+    /// <response code="404">Permission not found. Response is RFC 9457 Problem Details JSON.</response>
     [HttpGet("permissions/{name}")]
     [ProducesResponseType(typeof(Permission), 200)]
     [ProducesResponseType(404)]
@@ -75,7 +75,7 @@ public class PermissionController(
     /// <param name="ct">Cancellation token</param>
     /// <returns>Success status</returns>
     /// <response code="200">Permission updated successfully</response>
-    /// <response code="404">Permission not found</response>
+    /// <response code="404">Permission not found. Response is RFC 9457 Problem Details JSON.</response>
     [HttpPut("permissions/{name}")]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]
@@ -97,7 +97,7 @@ public class PermissionController(
     /// <param name="ct">Cancellation token</param>
     /// <returns>Success status</returns>
     /// <response code="204">Permission deleted successfully</response>
-    /// <response code="404">Permission not found</response>
+    /// <response code="404">Permission not found. Response is RFC 9457 Problem Details JSON.</response>
     [HttpDelete("permissions/{name}")]
     [ProducesResponseType(204)]
     [ProducesResponseType(404)]
@@ -120,7 +120,7 @@ public class PermissionController(
     /// <param name="ct">Cancellation token</param>
     /// <returns>Success status</returns>
     /// <response code="200">Default status updated successfully</response>
-    /// <response code="404">Permission not found</response>
+    /// <response code="404">Permission not found. Response is RFC 9457 Problem Details JSON.</response>
     [HttpPut("permissions/{name}/default")]
     [ProducesResponseType(200)]
     [ProducesResponseType(404)]

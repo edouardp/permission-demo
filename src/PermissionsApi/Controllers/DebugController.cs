@@ -15,7 +15,7 @@ public class DebugController(IPermissionsRepository repository) : ControllerBase
     /// <param name="ct">Cancellation token</param>
     /// <returns>Detailed permission resolution chain for debugging</returns>
     /// <response code="200">Debug information retrieved successfully</response>
-    /// <response code="404">User not found</response>
+    /// <response code="404">User not found. Response is RFC 9457 Problem Details JSON.</response>
     [HttpGet("{email}/debug")]
     [ProducesResponseType(typeof(PermissionDebugResponse), 200)]
     [ProducesResponseType(404)]
