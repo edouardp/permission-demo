@@ -144,7 +144,6 @@ Feature: Permission Debug Endpoint
     Content-Type: application/json
 
     {
-      "permission": "{{DELETE_PERMISSION}}",
       "access": "ALLOW"
     }
     """
