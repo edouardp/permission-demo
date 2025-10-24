@@ -101,8 +101,8 @@ public class PermissionsController : ControllerBase
         return CreatedAtAction(nameof(CreateGroup), new { id = group.Id, name = group.Name });
     }
 
-    [HttpPost("groups/{groupId}/permissions")]
-    public async Task<IActionResult> SetGroupPermission(string groupId, [FromBody] BatchPermissionRequest request, CancellationToken ct)
+    [HttpPut("groups/{groupId}/permissions")]
+    public async Task<IActionResult> SetGroupPermissions(string groupId, [FromBody] BatchPermissionRequest request, CancellationToken ct)
     {
         // Validate all permissions exist
         var invalidPermissions = new List<string>();
@@ -125,13 +125,10 @@ public class PermissionsController : ControllerBase
             );
         }
 
-        // Set all permissions
-        foreach (var permissionRequest in request.Permissions)
-        {
-            await _repository.SetGroupPermissionAsync(groupId, permissionRequest.Permission, permissionRequest.Access, ct);
-        }
+        // Replace all permissions for this group
+        await _repository.ReplaceGroupPermissionsAsync(groupId, request.Permissions, ct);
 
-        _logger.LogInformation("Set {Count} permissions for group {GroupId}", request.Permissions.Count, groupId);
+        _logger.LogInformation("Replaced permissions for group {GroupId} with {Count} permissions", groupId, request.Permissions.Count);
         return Ok();
     }
 
@@ -143,8 +140,8 @@ public class PermissionsController : ControllerBase
         return CreatedAtAction(nameof(CreateUser), null);
     }
 
-    [HttpPost("users/{email}/permissions")]
-    public async Task<IActionResult> SetUserPermission(string email, [FromBody] BatchPermissionRequest request, CancellationToken ct)
+    [HttpPut("users/{email}/permissions")]
+    public async Task<IActionResult> SetUserPermissions(string email, [FromBody] BatchPermissionRequest request, CancellationToken ct)
     {
         // Validate all permissions exist
         var invalidPermissions = new List<string>();
@@ -167,13 +164,10 @@ public class PermissionsController : ControllerBase
             );
         }
 
-        // Set all permissions
-        foreach (var permissionRequest in request.Permissions)
-        {
-            await _repository.SetUserPermissionAsync(email, permissionRequest.Permission, permissionRequest.Access, ct);
-        }
+        // Replace all permissions for this user
+        await _repository.ReplaceUserPermissionsAsync(email, request.Permissions, ct);
 
-        _logger.LogInformation("Set {Count} permissions for user {Email}", request.Permissions.Count, email);
+        _logger.LogInformation("Replaced permissions for user {Email} with {Count} permissions", email, request.Permissions.Count);
         return Ok();
     }
 

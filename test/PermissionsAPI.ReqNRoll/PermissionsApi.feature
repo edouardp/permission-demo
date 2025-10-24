@@ -33,6 +33,53 @@ Feature: Permissions API Integration
     }
     """
 
+    # Create additional permissions that tests will reference
+    Given the following request
+    """
+    POST /api/v1/permissions HTTP/1.1
+    Content-Type: application/json
+
+    {
+      "name": "write",
+      "description": "Write permission",
+      "isDefault": false
+    }
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 201 Created
+    Content-Type: application/json
+
+    {
+      "name": "write",
+      "isDefault": false
+    }
+    """
+
+    Given the following request
+    """
+    POST /api/v1/permissions HTTP/1.1
+    Content-Type: application/json
+
+    {
+      "name": "delete",
+      "description": "Delete permission",
+      "isDefault": false
+    }
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 201 Created
+    Content-Type: application/json
+
+    {
+      "name": "delete",
+      "isDefault": false
+    }
+    """
+
   Scenario: Check permissions for user with only default permissions
     # WHEN the system calculates permissions for a user with no group memberships or user-level permissions
     # THEN the system SHALL return default permissions
@@ -121,12 +168,16 @@ Feature: Permissions API Integration
     # Grant "write" permission to the group
     Given the following request
     """
-    POST /api/v1/groups/{{GROUP_ID}}/permissions HTTP/1.1
+    PUT /api/v1/groups/{{GROUP_ID}}/permissions HTTP/1.1
     Content-Type: application/json
 
     {
-      "permission": "write",
-      "access": "ALLOW"
+      "permissions": [
+        {
+          "permission": "write",
+          "access": "ALLOW"
+        }
+      ]
     }
     """
 
@@ -226,12 +277,16 @@ Feature: Permissions API Integration
     # Group denies "delete" permission
     Given the following request
     """
-    POST /api/v1/groups/{{GROUP_ID}}/permissions HTTP/1.1
+    PUT /api/v1/groups/{{GROUP_ID}}/permissions HTTP/1.1
     Content-Type: application/json
 
     {
-      "permission": "delete",
-      "access": "DENY"
+      "permissions": [
+        {
+          "permission": "delete",
+          "access": "DENY"
+        }
+      ]
     }
     """
 
@@ -261,12 +316,16 @@ Feature: Permissions API Integration
     # This should override the group's DENY
     Given the following request
     """
-    POST /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
+    PUT /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
     Content-Type: application/json
 
     {
-      "permission": "delete",
-      "access": "ALLOW"
+      "permissions": [
+        {
+          "permission": "delete",
+          "access": "ALLOW"
+        }
+      ]
     }
     """
 
@@ -370,12 +429,16 @@ Feature: Permissions API Integration
     # Grant "write" permission to editors group
     Given the following request
     """
-    POST /api/v1/groups/{{EDITORS_GROUP_ID}}/permissions HTTP/1.1
+    PUT /api/v1/groups/{{EDITORS_GROUP_ID}}/permissions HTTP/1.1
     Content-Type: application/json
 
     {
-      "permission": "write",
-      "access": "ALLOW"
+      "permissions": [
+        {
+          "permission": "write",
+          "access": "ALLOW"
+        }
+      ]
     }
     """
 
@@ -387,12 +450,16 @@ Feature: Permissions API Integration
     # Grant "delete" permission to admins group
     Given the following request
     """
-    POST /api/v1/groups/{{ADMINS_GROUP_ID}}/permissions HTTP/1.1
+    PUT /api/v1/groups/{{ADMINS_GROUP_ID}}/permissions HTTP/1.1
     Content-Type: application/json
 
     {
-      "permission": "delete",
-      "access": "ALLOW"
+      "permissions": [
+        {
+          "permission": "delete",
+          "access": "ALLOW"
+        }
+      ]
     }
     """
 

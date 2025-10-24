@@ -60,7 +60,7 @@ Feature: Groups
     # This should override the default "read": true
     Given the following request
     """
-    POST /api/v1/groups/{{GROUP_ID}}/permissions HTTP/1.1
+    PUT /api/v1/groups/{{GROUP_ID}}/permissions HTTP/1.1
     Content-Type: application/json
 
     {
@@ -165,7 +165,7 @@ Feature: Groups
     # Attempt to set a non-existent permission
     Given the following request
     """
-    POST /api/v1/groups/{{GROUP_ID}}/permissions HTTP/1.1
+    PUT /api/v1/groups/{{GROUP_ID}}/permissions HTTP/1.1
     Content-Type: application/json
 
     {

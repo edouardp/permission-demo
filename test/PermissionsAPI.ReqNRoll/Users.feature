@@ -121,7 +121,7 @@ Feature: Users
     # Grant user-specific ALLOW for "write" permission
     Given the following request
     """
-    POST /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
+    PUT /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
     Content-Type: application/json
 
     {
@@ -198,7 +198,7 @@ Feature: Users
     # This should override the default "read": true
     Given the following request
     """
-    POST /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
+    PUT /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
     Content-Type: application/json
 
     {
@@ -274,7 +274,7 @@ Feature: Users
     # Set multiple permissions in one request
     Given the following request
     """
-    POST /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
+    PUT /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
     Content-Type: application/json
 
     {
@@ -382,7 +382,7 @@ Feature: Users
     # Attempt to set a non-existent permission
     Given the following request
     """
-    POST /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
+    PUT /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
     Content-Type: application/json
 
     {
@@ -444,7 +444,7 @@ Feature: Users
     # Attempt to set multiple permissions, some valid, some invalid
     Given the following request
     """
-    POST /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
+    PUT /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
     Content-Type: application/json
 
     {

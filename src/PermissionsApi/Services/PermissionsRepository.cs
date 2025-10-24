@@ -95,6 +95,20 @@ public class PermissionsRepository : IPermissionsRepository
         return Task.CompletedTask;
     }
 
+    public Task ReplaceGroupPermissionsAsync(string groupId, List<PermissionRequest> permissions, CancellationToken ct)
+    {
+        if (_groups.TryGetValue(groupId, out var group))
+        {
+            group.Permissions.Clear();
+            foreach (var permission in permissions)
+            {
+                group.Permissions[permission.Permission] = permission.Access;
+            }
+            _logger.LogInformation("Replaced group {GroupId} permissions with {Count} permissions", groupId, permissions.Count);
+        }
+        return Task.CompletedTask;
+    }
+
     public Task<User> CreateUserAsync(string email, List<string> groups, CancellationToken ct)
     {
         var user = new User { Email = email, Groups = groups };
@@ -109,6 +123,20 @@ public class PermissionsRepository : IPermissionsRepository
         {
             user.Permissions[permission] = access;
             _logger.LogInformation("Set user {Email} permission {Permission} to {Access}", email, permission, access);
+        }
+        return Task.CompletedTask;
+    }
+
+    public Task ReplaceUserPermissionsAsync(string email, List<PermissionRequest> permissions, CancellationToken ct)
+    {
+        if (_users.TryGetValue(email, out var user))
+        {
+            user.Permissions.Clear();
+            foreach (var permission in permissions)
+            {
+                user.Permissions[permission.Permission] = permission.Access;
+            }
+            _logger.LogInformation("Replaced user {Email} permissions with {Count} permissions", email, permissions.Count);
         }
         return Task.CompletedTask;
     }
