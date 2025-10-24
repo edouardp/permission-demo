@@ -180,14 +180,14 @@ public class PermissionsRepository(ILogger<PermissionsRepository> logger, IHisto
             {
                 foreach (var perm in group.Permissions.ToList())
                 {
-                    result[perm.Key] = perm.Value == "ALLOW";
+                    result[perm.Key] = perm.Value == PermissionAccess.Allow;
                 }
             }
         }
 
         foreach (var perm in user.Permissions.ToList())
         {
-            result[perm.Key] = perm.Value == "ALLOW";
+            result[perm.Key] = perm.Value == PermissionAccess.Allow;
         }
         
         logger.LogDebug("Calculated {PermissionCount} permissions for user {Email}", result.Count, email);
@@ -228,7 +228,7 @@ public class PermissionsRepository(ILogger<PermissionsRepository> logger, IHisto
                 {
                     Level = "Default",
                     Source = "system",
-                    Action = defaultValue ? "ALLOW" : "DENY"
+                    Action = defaultValue ? PermissionAccess.Allow : PermissionAccess.Deny
                 });
                 finalResult = defaultValue;
             }
@@ -238,7 +238,7 @@ public class PermissionsRepository(ILogger<PermissionsRepository> logger, IHisto
                 {
                     Level = "Default",
                     Source = "system",
-                    Action = "NONE"
+                    Action = PermissionAccess.None
                 });
             }
 
@@ -253,7 +253,7 @@ public class PermissionsRepository(ILogger<PermissionsRepository> logger, IHisto
                         Source = group.Name,
                         Action = groupAccess
                     });
-                    finalResult = groupAccess == "ALLOW";
+                    finalResult = groupAccess == PermissionAccess.Allow;
                 }
             }
 
@@ -266,13 +266,13 @@ public class PermissionsRepository(ILogger<PermissionsRepository> logger, IHisto
                     Source = email,
                     Action = userAccess
                 });
-                finalResult = userAccess == "ALLOW";
+                finalResult = userAccess == PermissionAccess.Allow;
             }
 
             debugItems.Add(new PermissionDebugItem
             {
                 Permission = permission,
-                FinalResult = finalResult ? "ALLOW" : "DENY",
+                FinalResult = finalResult ? PermissionAccess.Allow : PermissionAccess.Deny,
                 Chain = chain
             });
         }
