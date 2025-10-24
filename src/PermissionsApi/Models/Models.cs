@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace PermissionsApi.Models;
 
 public record Permission : IEntity
@@ -63,6 +65,7 @@ public record CreatePermissionRequest : AuditableRequest
 {
     public required string Name { get; init; }
     public required string Description { get; init; }
+    [JsonRequired]
     public bool IsDefault { get; init; }
 }
 

@@ -6,6 +6,8 @@ namespace PermissionsApi
 {
     public class Program
     {
+        private Program() { } // Private constructor to satisfy S1118
+        
         public static void Main(string[] args)
         {
             Log.Logger = new LoggerConfiguration()

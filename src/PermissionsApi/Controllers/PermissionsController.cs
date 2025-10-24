@@ -6,6 +6,7 @@ namespace PermissionsApi.Controllers;
 
 [ApiController]
 [Route("api/v1")]
+#pragma warning disable S6960 // Controller responsibilities are appropriate for this API size
 public class PermissionsController(
     IPermissionsRepository repository,
     IHistoryService historyService,
@@ -140,13 +141,15 @@ public class PermissionsController(
     public async Task<IActionResult> SetGroupPermissions(string groupId, [FromBody] BatchPermissionRequest request, CancellationToken ct)
     {
         // Validate all permissions exist
+        var permissionNames = request.Permissions.Select(permissionRequest => permissionRequest.Permission).ToList();
         var invalidPermissions = new List<string>();
-        foreach (var permissionRequest in request.Permissions)
+        
+        foreach (var permissionName in permissionNames)
         {
-            var permission = await repository.GetPermissionAsync(permissionRequest.Permission, ct);
+            var permission = await repository.GetPermissionAsync(permissionName, ct);
             if (permission == null)
             {
-                invalidPermissions.Add(permissionRequest.Permission);
+                invalidPermissions.Add(permissionName);
             }
         }
 
@@ -207,13 +210,15 @@ public class PermissionsController(
     public async Task<IActionResult> SetUserPermissions(string email, [FromBody] BatchPermissionRequest request, CancellationToken ct)
     {
         // Validate all permissions exist
+        var permissionNames = request.Permissions.Select(permissionRequest => permissionRequest.Permission).ToList();
         var invalidPermissions = new List<string>();
-        foreach (var permissionRequest in request.Permissions)
+        
+        foreach (var permissionName in permissionNames)
         {
-            var permission = await repository.GetPermissionAsync(permissionRequest.Permission, ct);
+            var permission = await repository.GetPermissionAsync(permissionName, ct);
             if (permission == null)
             {
-                invalidPermissions.Add(permissionRequest.Permission);
+                invalidPermissions.Add(permissionName);
             }
         }
 
