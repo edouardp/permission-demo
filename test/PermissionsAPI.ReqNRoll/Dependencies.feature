@@ -44,6 +44,17 @@ Feature: Dependencies
     }
     """
 
+    # Cleanup
+    Given the following request
+    """
+    DELETE /api/v1/permissions/{{PERM_NAME}} HTTP/1.1
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 204 NoContent
+    """
+
   Scenario: Permission used by groups shows group dependencies
     Given the variable 'PERM_NAME' is set to 'shared-{{GUID()}}'
     And the variable 'GROUP_A' is set to 'team-a-{{GUID()}}'
@@ -162,6 +173,37 @@ Feature: Dependencies
     }
     """
 
+    # Cleanup
+    Given the following request
+    """
+    DELETE /api/v1/groups/{{GROUP_A_ID}} HTTP/1.1
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 204 NoContent
+    """
+
+    Given the following request
+    """
+    DELETE /api/v1/groups/{{GROUP_B_ID}} HTTP/1.1
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 204 NoContent
+    """
+
+    Given the following request
+    """
+    DELETE /api/v1/permissions/{{PERM_NAME}} HTTP/1.1
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 204 NoContent
+    """
+
   Scenario: Group with no users shows empty dependencies
     Given the variable 'GROUP_NAME' is set to 'empty-{{GUID()}}'
     
@@ -201,6 +243,17 @@ Feature: Dependencies
       "groupName": "{{GROUP_NAME}}",
       "users": []
     }
+    """
+
+    # Cleanup
+    Given the following request
+    """
+    DELETE /api/v1/groups/{{GROUP_ID}} HTTP/1.1
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 204 NoContent
     """
 
   Scenario: Dependencies prevent deletion with 409 Conflict
@@ -281,4 +334,35 @@ Feature: Dependencies
       "title": "Referential integrity violation",
       "status": 409
     }
+    """
+
+    # Cleanup - remove permission from group first
+    Given the following request
+    """
+    DELETE /api/v1/groups/{{GROUP_ID}}/permissions/{{PERM_NAME}} HTTP/1.1
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 204 NoContent
+    """
+
+    Given the following request
+    """
+    DELETE /api/v1/groups/{{GROUP_ID}} HTTP/1.1
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 204 NoContent
+    """
+
+    Given the following request
+    """
+    DELETE /api/v1/permissions/{{PERM_NAME}} HTTP/1.1
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 204 NoContent
     """
