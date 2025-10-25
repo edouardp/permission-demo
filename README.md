@@ -96,6 +96,7 @@ User
 ## Core Features
 
 ### Permission Management
+
 - Create/update/delete permissions with default status
 - Batch permission operations for performance
 - Individual and bulk permission assignment
@@ -103,6 +104,7 @@ User
 - Validation: `[A-Za-z0-9:-]` (no leading/trailing `:` or `-`, no consecutive `:`, no `:` adjacent to `-`)
 
 ### User & Group Management
+
 - Users identified by email with multi-group membership
 - Groups with hierarchical permission inheritance
 - Alphabetical group processing for deterministic behavior
@@ -110,12 +112,14 @@ User
 - Validation: Group names `[A-Za-z0-9-]`, emails RFC-compliant
 
 ### Referential Integrity
+
 - Prevents deletion of permissions assigned to groups or users
 - Prevents deletion of groups assigned to users
 - Dependency endpoints show what blocks deletion
 - Returns HTTP 409 Conflict with detailed error messages
 
 ### Audit & Debugging
+
 - Complete change history with UTC timestamps
 - Entity-specific history tracking
 - Permission resolution chain debugging
@@ -127,12 +131,14 @@ User
 ### Permissions
 
 #### List All Permissions
+
 ```http
 GET /api/v1/permissions
 ```
 Returns all permissions sorted alphabetically by name.
 
 #### Create Permission
+
 ```http
 POST /api/v1/permissions
 Content-Type: application/json
@@ -147,11 +153,13 @@ Content-Type: application/json
 ```
 
 #### Get Permission
+
 ```http
 GET /api/v1/permissions/{name}
 ```
 
 #### Update Permission Description
+
 ```http
 PUT /api/v1/permissions/{name}
 Content-Type: application/json
@@ -164,12 +172,14 @@ Content-Type: application/json
 ```
 
 #### Delete Permission
+
 ```http
 DELETE /api/v1/permissions/{name}
 ```
 Returns 409 Conflict if permission is assigned to any groups or users.
 
 #### Toggle Default Status
+
 ```http
 PUT /api/v1/permissions/{name}/default
 Content-Type: application/json
@@ -178,10 +188,12 @@ true  // or false
 ```
 
 #### Get Permission Dependencies
+
 ```http
 GET /api/v1/permissions/{name}/dependencies
 ```
 Returns:
+
 ```json
 {
   "permission": "write",
@@ -191,6 +203,7 @@ Returns:
 ```
 
 #### Get Permission History
+
 ```http
 GET /api/v1/permissions/{name}/history
 ```
@@ -198,6 +211,7 @@ GET /api/v1/permissions/{name}/history
 ### Groups
 
 #### Create Group
+
 ```http
 POST /api/v1/groups
 Content-Type: application/json
@@ -211,6 +225,7 @@ Content-Type: application/json
 Returns: `{"id": "guid", "name": "group-name", "permissions": {}}`
 
 #### Set Group Permissions (Batch)
+
 ```http
 PUT /api/v1/groups/{id}/permissions
 Content-Type: application/json
@@ -225,6 +240,7 @@ Content-Type: application/json
 Replaces all permissions for the group.
 
 #### Set Individual Group Permission
+
 ```http
 PUT /api/v1/groups/{id}/permissions/{name}
 Content-Type: application/json
@@ -237,17 +253,20 @@ Content-Type: application/json
 ```
 
 #### Remove Group Permission
+
 ```http
 DELETE /api/v1/groups/{id}/permissions/{name}
 ```
 
 #### Delete Group
+
 ```http
 DELETE /api/v1/groups/{id}
 ```
 Returns 409 Conflict if group is assigned to any users.
 
 #### Get Group Dependencies
+
 ```http
 GET /api/v1/groups/{id}/dependencies
 ```
@@ -261,6 +280,7 @@ Returns:
 ```
 
 #### Get Group History
+
 ```http
 GET /api/v1/groups/{id}/history
 ```
@@ -268,6 +288,7 @@ GET /api/v1/groups/{id}/history
 ### Users
 
 #### Create User
+
 ```http
 POST /api/v1/users
 Content-Type: application/json
@@ -281,6 +302,7 @@ Content-Type: application/json
 ```
 
 #### Get Calculated Permissions
+
 ```http
 GET /api/v1/users/{email}/permissions
 ```
@@ -294,6 +316,7 @@ Returns:
 ```
 
 #### Set User Permissions (Batch)
+
 ```http
 PUT /api/v1/users/{email}/permissions
 Content-Type: application/json
@@ -307,6 +330,7 @@ Content-Type: application/json
 ```
 
 #### Set Individual User Permission
+
 ```http
 PUT /api/v1/users/{email}/permissions/{name}
 Content-Type: application/json
@@ -319,16 +343,19 @@ Content-Type: application/json
 ```
 
 #### Remove User Permission
+
 ```http
 DELETE /api/v1/users/{email}/permissions/{name}
 ```
 
 #### Delete User
+
 ```http
 DELETE /api/v1/users/{email}
 ```
 
 #### Get User History
+
 ```http
 GET /api/v1/users/{email}/history
 ```
@@ -336,10 +363,13 @@ GET /api/v1/users/{email}/history
 ### Debugging
 
 #### Debug Permission Resolution
+
 ```http
 GET /api/v1/user/{email}/debug
 ```
+
 Returns detailed resolution chain for all permissions:
+
 ```json
 {
   "email": "user@example.com",
@@ -360,6 +390,7 @@ Returns detailed resolution chain for all permissions:
 ### History & Audit
 
 #### Get Global History
+
 ```http
 GET /api/v1/history?skip=0&count=10
 ```
@@ -377,6 +408,7 @@ Returns paginated history of all changes across all entities.
 ### Example Scenario
 
 **Setup:**
+
 - Permission `read` with `isDefault: true`
 - Permission `write` with `isDefault: false`
 - Permission `delete` with `isDefault: false`
@@ -386,6 +418,7 @@ Returns paginated history of all changes across all entities.
 - User override: `delete: ALLOW`
 
 **Resolution:**
+
 1. **Default**: `read: ALLOW`
 2. **Group "admins"** (alphabetically first): `read: ALLOW, write: ALLOW, delete: ALLOW`
 3. **Group "restricted"** (alphabetically second): `read: ALLOW, write: ALLOW, delete: DENY`
@@ -396,6 +429,7 @@ Returns paginated history of all changes across all entities.
 ## Validation Rules
 
 ### Permission Names
+
 - Pattern: `[A-Za-z0-9:-]+`
 - Cannot start or end with `:` or `-`
 - No consecutive colons (`::`)
@@ -403,11 +437,13 @@ Returns paginated history of all changes across all entities.
 - Examples: `read`, `user:write`, `admin:delete-all`, `system:a1-b2:c3`
 
 ### Group Names
+
 - Pattern: `[A-Za-z0-9-]+`
 - Cannot start or end with `-`
 - Examples: `editors`, `content-editors`, `team-123`
 
 ### Email Addresses
+
 - Standard RFC-compliant email validation
 - No consecutive dots in domain
 - TLD must be at least 2 characters
@@ -452,6 +488,7 @@ curl /api/v1/groups/{id}/dependencies
 ## Development
 
 ### Prerequisites
+
 - .NET 9.0 SDK
 - Optional: Seq for log aggregation
 
@@ -496,6 +533,7 @@ notebooks/
 ## Testing
 
 ### Unit Tests (148 tests)
+
 - **PermissionNameValidator**: 17 tests covering all validation rules
 - **GroupNameValidator**: 10 tests for group name patterns
 - **EmailValidator**: 11 tests for email validation
@@ -504,6 +542,7 @@ notebooks/
 Run: `dotnet test --filter "FullyQualifiedName~UnitTests"`
 
 ### Integration Tests (33 tests)
+
 - **Permissions**: CRUD operations and validation
 - **Groups**: Creation, permission assignment, deletion
 - **Users**: Creation, group membership, permission calculation
@@ -516,6 +555,7 @@ Run: `dotnet test --filter "FullyQualifiedName~UnitTests"`
 Run: `dotnet test --filter "FullyQualifiedName~ReqNRoll"`
 
 ### Test Features
+
 - All tests use GUIDs for isolation and parallel execution
 - Idempotent tests with cleanup steps
 - BDD scenarios in plain English (Gherkin syntax)

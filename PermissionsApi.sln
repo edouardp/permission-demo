@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PermissionsAPI.ReqNRoll", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PermissionsApi.UnitTests", "test\PermissionsApi.UnitTests\PermissionsApi.UnitTests.csproj", "{97C7847D-295E-404F-BB5F-843EC57A3C9C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PermissionsBff", "src\PermissionsBff\PermissionsBff.csproj", "{3A891924-6846-4274-A6EC-9669ABC145FE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -59,6 +61,18 @@ Global
 		{97C7847D-295E-404F-BB5F-843EC57A3C9C}.Release|x64.Build.0 = Release|Any CPU
 		{97C7847D-295E-404F-BB5F-843EC57A3C9C}.Release|x86.ActiveCfg = Release|Any CPU
 		{97C7847D-295E-404F-BB5F-843EC57A3C9C}.Release|x86.Build.0 = Release|Any CPU
+		{3A891924-6846-4274-A6EC-9669ABC145FE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3A891924-6846-4274-A6EC-9669ABC145FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3A891924-6846-4274-A6EC-9669ABC145FE}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{3A891924-6846-4274-A6EC-9669ABC145FE}.Debug|x64.Build.0 = Debug|Any CPU
+		{3A891924-6846-4274-A6EC-9669ABC145FE}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{3A891924-6846-4274-A6EC-9669ABC145FE}.Debug|x86.Build.0 = Debug|Any CPU
+		{3A891924-6846-4274-A6EC-9669ABC145FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3A891924-6846-4274-A6EC-9669ABC145FE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3A891924-6846-4274-A6EC-9669ABC145FE}.Release|x64.ActiveCfg = Release|Any CPU
+		{3A891924-6846-4274-A6EC-9669ABC145FE}.Release|x64.Build.0 = Release|Any CPU
+		{3A891924-6846-4274-A6EC-9669ABC145FE}.Release|x86.ActiveCfg = Release|Any CPU
+		{3A891924-6846-4274-A6EC-9669ABC145FE}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -67,5 +81,6 @@ Global
 		{D9624E04-9228-4D4F-B5CA-65E787610401} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{BDAE31F0-03F4-4A29-B813-FFFC30A736C7} = {0C88DD14-F956-CE84-757C-A364CCF449FC}
 		{97C7847D-295E-404F-BB5F-843EC57A3C9C} = {0C88DD14-F956-CE84-757C-A364CCF449FC}
+		{3A891924-6846-4274-A6EC-9669ABC145FE} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal
