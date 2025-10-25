@@ -1,8 +1,15 @@
 Feature: Dependencies
+  As an API consumer
+  I want to check what dependencies prevent deletion of entities
+  So that I can understand what needs to be cleaned up before deletion
 
   Scenario: Permission with no dependencies shows empty lists
+    # WHEN a permission is created but not assigned to any groups or users
+    # THEN the dependencies endpoint SHALL return empty lists for both groups and users
+    
     Given the variable 'PERM_NAME' is set to 'unused-{{GUID()}}'
     
+    # Create a permission that won't be used anywhere
     Given the following request
     """
     POST /api/v1/permissions HTTP/1.1
@@ -27,6 +34,7 @@ Feature: Dependencies
     }
     """
 
+    # Check dependencies - should be empty
     Given the following request
     """
     GET /api/v1/permissions/{{PERM_NAME}}/dependencies HTTP/1.1
@@ -44,7 +52,7 @@ Feature: Dependencies
     }
     """
 
-    # Cleanup
+    # Cleanup - delete the permission
     Given the following request
     """
     DELETE /api/v1/permissions/{{PERM_NAME}} HTTP/1.1
@@ -56,10 +64,14 @@ Feature: Dependencies
     """
 
   Scenario: Permission used by groups shows group dependencies
+    # WHEN a permission is assigned to multiple groups
+    # THEN the dependencies endpoint SHALL return the list of group names (alphabetically sorted)
+    
     Given the variable 'PERM_NAME' is set to 'shared-{{GUID()}}'
     And the variable 'GROUP_A' is set to 'team-a-{{GUID()}}'
     And the variable 'GROUP_B' is set to 'team-b-{{GUID()}}'
     
+    # Create a permission
     Given the following request
     """
     POST /api/v1/permissions HTTP/1.1
@@ -84,6 +96,7 @@ Feature: Dependencies
     }
     """
 
+    # Create first group
     Given the following request
     """
     POST /api/v1/groups HTTP/1.1
@@ -105,6 +118,7 @@ Feature: Dependencies
     }
     """
 
+    # Create second group
     Given the following request
     """
     POST /api/v1/groups HTTP/1.1
@@ -126,6 +140,7 @@ Feature: Dependencies
     }
     """
 
+    # Assign permission to first group with ALLOW
     Given the following request
     """
     PUT /api/v1/groups/{{GROUP_A_ID}}/permissions/{{PERM_NAME}} HTTP/1.1
@@ -141,6 +156,7 @@ Feature: Dependencies
     HTTP/1.1 200 OK
     """
 
+    # Assign permission to second group with DENY
     Given the following request
     """
     PUT /api/v1/groups/{{GROUP_B_ID}}/permissions/{{PERM_NAME}} HTTP/1.1
@@ -156,6 +172,7 @@ Feature: Dependencies
     HTTP/1.1 200 OK
     """
 
+    # Check dependencies - should show both groups (alphabetically sorted)
     Given the following request
     """
     GET /api/v1/permissions/{{PERM_NAME}}/dependencies HTTP/1.1
@@ -173,7 +190,7 @@ Feature: Dependencies
     }
     """
 
-    # Cleanup
+    # Cleanup - delete groups first, then permission
     Given the following request
     """
     DELETE /api/v1/groups/{{GROUP_A_ID}} HTTP/1.1
@@ -205,8 +222,12 @@ Feature: Dependencies
     """
 
   Scenario: Group with no users shows empty dependencies
+    # WHEN a group is created but has no users assigned
+    # THEN the dependencies endpoint SHALL return an empty users list
+    
     Given the variable 'GROUP_NAME' is set to 'empty-{{GUID()}}'
     
+    # Create a group with no users
     Given the following request
     """
     POST /api/v1/groups HTTP/1.1
@@ -228,6 +249,7 @@ Feature: Dependencies
     }
     """
 
+    # Check dependencies - should show empty users list
     Given the following request
     """
     GET /api/v1/groups/{{GROUP_ID}}/dependencies HTTP/1.1
@@ -245,7 +267,7 @@ Feature: Dependencies
     }
     """
 
-    # Cleanup
+    # Cleanup - delete the group
     Given the following request
     """
     DELETE /api/v1/groups/{{GROUP_ID}} HTTP/1.1
@@ -257,9 +279,13 @@ Feature: Dependencies
     """
 
   Scenario: Dependencies prevent deletion with 409 Conflict
+    # WHEN attempting to delete a permission that is assigned to a group
+    # THEN the API SHALL return 409 Conflict with referential integrity violation details
+    
     Given the variable 'PERM_NAME' is set to 'protected-{{GUID()}}'
     And the variable 'GROUP_NAME' is set to 'users-{{GUID()}}'
     
+    # Create a permission
     Given the following request
     """
     POST /api/v1/permissions HTTP/1.1
@@ -284,6 +310,7 @@ Feature: Dependencies
     }
     """
 
+    # Create a group
     Given the following request
     """
     POST /api/v1/groups HTTP/1.1
@@ -305,6 +332,7 @@ Feature: Dependencies
     }
     """
 
+    # Assign permission to the group
     Given the following request
     """
     PUT /api/v1/groups/{{GROUP_ID}}/permissions/{{PERM_NAME}} HTTP/1.1
@@ -320,6 +348,7 @@ Feature: Dependencies
     HTTP/1.1 200 OK
     """
 
+    # Attempt to delete permission - should fail with 409 Conflict
     Given the following request
     """
     DELETE /api/v1/permissions/{{PERM_NAME}} HTTP/1.1
@@ -336,7 +365,7 @@ Feature: Dependencies
     }
     """
 
-    # Cleanup - remove permission from group first
+    # Cleanup - remove permission from group first, then delete both
     Given the following request
     """
     DELETE /api/v1/groups/{{GROUP_ID}}/permissions/{{PERM_NAME}} HTTP/1.1
