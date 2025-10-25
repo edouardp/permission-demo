@@ -14,12 +14,22 @@ namespace PermissionsApi
         
         public static void Main(string[] args)
         {
-            Log.Logger = new LoggerConfiguration()
+            var loggerConfig = new LoggerConfiguration()
                 .MinimumLevel.ControlledBy(LevelSwitch)
-                .WriteTo.Console(new CompactJsonFormatter())
                 .Enrich.FromLogContext()
-                .Enrich.WithProperty("Application", "PermissionsApi")
-                .CreateLogger();
+                .Enrich.WithProperty("Application", "PermissionsApi");
+
+            var seqUrl = Environment.GetEnvironmentVariable("SEQ_URL");
+            if (!string.IsNullOrEmpty(seqUrl))
+            {
+                loggerConfig.WriteTo.Seq(seqUrl);
+            }
+            else
+            {
+                loggerConfig.WriteTo.Console(new CompactJsonFormatter());
+            }
+            
+            Log.Logger = loggerConfig.CreateLogger();
 
             if (Environment.GetEnvironmentVariable("SUPPRESS_LOGGING") == "true")
             {
@@ -34,9 +44,11 @@ namespace PermissionsApi
 
                 builder.Host.UseSerilog();
 
-                builder.Services.AddSingleton<IPermissionsRepository, PermissionsRepository>();
                 builder.Services.AddSingleton(TimeProvider.System);
                 builder.Services.AddSingleton<IHistoryService, HistoryService>();
+                builder.Services.AddSingleton<PermissionsRepository>();
+                builder.Services.AddSingleton<IPermissionsRepository>(sp => sp.GetRequiredService<PermissionsRepository>());
+                builder.Services.AddSingleton<IIntegrityChecker, IntegrityChecker>();
                 builder.Services.AddControllers();
                 builder.Services.AddEndpointsApiExplorer();
                 builder.Services.AddSwaggerGen(c =>

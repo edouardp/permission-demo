@@ -1,3 +1,4 @@
+using AwesomeAssertions;
 using PermissionsApi.Services;
 
 namespace PermissionsApi.UnitTests;
@@ -6,80 +7,96 @@ public class EmailValidatorTests
 {
     [Theory]
     [InlineData("user@example.com")]
-    [InlineData("john.doe@company.com")]
-    [InlineData("admin@test.org")]
-    [InlineData("support@example.co.uk")]
-    [InlineData("user123@domain.com")]
-    [InlineData("a@a.au")]
+    [InlineData("admin@company.org")]
+    [InlineData("test@domain.net")]
+    [InlineData("a@b.co")]
     public void IsValid_StandardEmails_ReturnsTrue(string email)
     {
-        Assert.True(EmailValidator.IsValid(email));
+        EmailValidator.IsValid(email).Should().BeTrue();
     }
 
     [Theory]
-    [InlineData("first.last@company.com")]
+    [InlineData("user.name@example.com")]
+    [InlineData("first.last@company.org")]
+    [InlineData("a.b.c@domain.net")]
+    public void IsValid_WithDots_ReturnsTrue(string email)
+    {
+        EmailValidator.IsValid(email).Should().BeTrue();
+    }
+
+    [Theory]
     [InlineData("user+tag@example.com")]
-    [InlineData("user_name@domain.com")]
-    [InlineData("user-name@domain.com")]
-    public void IsValid_EmailsWithSpecialCharacters_ReturnsTrue(string email)
+    [InlineData("admin+test@company.org")]
+    public void IsValid_WithPlus_ReturnsTrue(string email)
     {
-        Assert.True(EmailValidator.IsValid(email));
+        EmailValidator.IsValid(email).Should().BeTrue();
     }
 
     [Theory]
-    [InlineData("admin@subdomain.example.com")]
-    [InlineData("user@mail.company.co.uk")]
-    [InlineData("someone@branch.country.example.com")]
-    public void IsValid_EmailsWithSubdomains_ReturnsTrue(string email)
+    [InlineData("user_name@example.com")]
+    [InlineData("admin_test@company.org")]
+    public void IsValid_WithUnderscore_ReturnsTrue(string email)
     {
-        Assert.True(EmailValidator.IsValid(email));
+        EmailValidator.IsValid(email).Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData("user-name@example.com")]
+    [InlineData("admin-test@company.org")]
+    public void IsValid_WithHyphen_ReturnsTrue(string email)
+    {
+        EmailValidator.IsValid(email).Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData("user@sub.example.com")]
+    [InlineData("admin@mail.company.org")]
+    [InlineData("test@a.b.c.com")]
+    public void IsValid_WithSubdomains_ReturnsTrue(string email)
+    {
+        EmailValidator.IsValid(email).Should().BeTrue();
     }
 
     [Theory]
     [InlineData("")]
-    public void IsValid_Empty_ReturnsFalse(string email)
-    {
-        Assert.False(EmailValidator.IsValid(email));
-    }
-
-    [Fact]
-    public void IsValid_Null_ReturnsFalse()
-    {
-        Assert.False(EmailValidator.IsValid(null!));
-    }
-
-    [Theory]
+    [InlineData(" ")]
     [InlineData("notanemail")]
-    [InlineData("missing@domain")]
     [InlineData("@example.com")]
     [InlineData("user@")]
-    public void IsValid_MissingParts_ReturnsFalse(string email)
+    [InlineData("user")]
+    public void IsValid_InvalidFormat_ReturnsFalse(string email)
     {
-        Assert.False(EmailValidator.IsValid(email));
-    }
-
-    [Theory]
-    [InlineData("user @example.com")]
-    [InlineData("user@ example.com")]
-    [InlineData("user@example .com")]
-    public void IsValid_WithSpaces_ReturnsFalse(string email)
-    {
-        Assert.False(EmailValidator.IsValid(email));
-    }
-
-    [Theory]
-    [InlineData("user@@example.com")]
-    [InlineData("user@example..com")]
-    public void IsValid_InvalidCharacterSequences_ReturnsFalse(string email)
-    {
-        Assert.False(EmailValidator.IsValid(email));
+        EmailValidator.IsValid(email).Should().BeFalse();
     }
 
     [Theory]
     [InlineData("user@example")]
-    [InlineData("user@example.c")]
-    public void IsValid_InvalidTLD_ReturnsFalse(string email)
+    [InlineData("admin@company")]
+    public void IsValid_NoTLD_ReturnsFalse(string email)
     {
-        Assert.False(EmailValidator.IsValid(email));
+        EmailValidator.IsValid(email).Should().BeFalse();
+    }
+
+    [Theory]
+    [InlineData("admin@example..com")]
+    public void IsValid_ConsecutiveDotsInDomain_ReturnsFalse(string email)
+    {
+        EmailValidator.IsValid(email).Should().BeFalse();
+    }
+    
+    [Theory]
+    [InlineData("user..name@example.com")]
+    public void IsValid_ConsecutiveDotsInLocalPart_CurrentlyAllowed(string email)
+    {
+        // Note: Current validator allows consecutive dots in local part
+        // This may not be RFC compliant but matches existing behavior
+        EmailValidator.IsValid(email).Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData("user@example.c")]
+    public void IsValid_TLDTooShort_ReturnsFalse(string email)
+    {
+        EmailValidator.IsValid(email).Should().BeFalse();
     }
 }

@@ -10,6 +10,9 @@ public class PermissionsRepository(ILogger<PermissionsRepository> logger, IHisto
     private readonly ConcurrentDictionary<string, Group> groups = new();
     private readonly ConcurrentDictionary<string, User> users = new();
 
+    internal ConcurrentDictionary<string, Group> Groups => groups;
+    internal ConcurrentDictionary<string, User> Users => users;
+
     private Dictionary<string, bool> GetDefaultPermissions()
     {
         var defaults = new Dictionary<string, bool>();

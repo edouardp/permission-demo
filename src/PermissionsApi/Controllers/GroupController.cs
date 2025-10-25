@@ -10,6 +10,7 @@ namespace PermissionsApi.Controllers;
 public class GroupController(
     IPermissionsRepository repository,
     IHistoryService historyService,
+    IIntegrityChecker integrityChecker,
     ILogger<GroupController> logger)
     : ControllerBase
 {
@@ -157,17 +158,46 @@ public class GroupController(
     }
 
     /// <summary>
-    /// Deletes a group and all associated permissions
+    /// Gets dependencies that would prevent deletion of a group
+    /// </summary>
+    /// <param name="groupId">Group ID</param>
+    /// <returns>List of users in this group</returns>
+    /// <response code="200">Dependencies retrieved successfully</response>
+    [HttpGet("{groupId}/dependencies")]
+    [ProducesResponseType(typeof(GroupDependencies), 200)]
+    public async Task<IActionResult> GetGroupDependencies(string groupId)
+    {
+        var dependencies = await integrityChecker.GetGroupDependenciesAsync(groupId);
+        return Ok(dependencies);
+    }
+
+    /// <summary>
+    /// Deletes a group if not assigned to any users
     /// </summary>
     /// <param name="groupId">Group ID</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Success status</returns>
     /// <response code="204">Group deleted successfully</response>
+    /// <response code="409">Group is assigned to users. Response is RFC 9457 Problem Details JSON.</response>
     [HttpDelete("{groupId}")]
     [ProducesResponseType(204)]
+    [ProducesResponseType(409)]
     public async Task<IActionResult> DeleteGroup(string groupId, CancellationToken ct)
     {
         logger.LogInformation("Deleting group {GroupId}", groupId);
+        
+        var integrityCheck = await integrityChecker.CanDeleteGroupAsync(groupId);
+        if (!integrityCheck.IsValid)
+        {
+            logger.LogWarning("Cannot delete group {GroupId}: {Reason}", groupId, integrityCheck.Reason);
+            return Conflict(new ProblemDetails
+            {
+                Title = "Referential integrity violation",
+                Detail = integrityCheck.Reason,
+                Status = 409
+            });
+        }
+        
         await repository.DeleteGroupAsync(groupId, ct);
         return NoContent();
     }

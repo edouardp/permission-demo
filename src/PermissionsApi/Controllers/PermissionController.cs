@@ -10,6 +10,7 @@ namespace PermissionsApi.Controllers;
 public class PermissionController(
     IPermissionsRepository repository,
     IHistoryService historyService,
+    IIntegrityChecker integrityChecker,
     ILogger<PermissionController> logger)
     : ControllerBase
 {
@@ -100,25 +101,54 @@ public class PermissionController(
     }
 
     /// <summary>
-    /// Deletes a permission from the system
+    /// Deletes a permission if not referenced by any users or groups
     /// </summary>
     /// <param name="name">Permission name</param>
     /// <param name="ct">Cancellation token</param>
     /// <returns>Success status</returns>
     /// <response code="204">Permission deleted successfully</response>
     /// <response code="404">Permission not found. Response is RFC 9457 Problem Details JSON.</response>
+    /// <response code="409">Permission is referenced by users or groups. Response is RFC 9457 Problem Details JSON.</response>
     [HttpDelete("permissions/{name}")]
     [ProducesResponseType(204)]
     [ProducesResponseType(404)]
+    [ProducesResponseType(409)]
     public async Task<IActionResult> DeletePermission(string name, CancellationToken ct)
     {
         logger.LogInformation("Deleting permission {PermissionName}", name);
+        
+        var integrityCheck = await integrityChecker.CanDeletePermissionAsync(name);
+        if (!integrityCheck.IsValid)
+        {
+            logger.LogWarning("Cannot delete permission {PermissionName}: {Reason}", name, integrityCheck.Reason);
+            return Conflict(new ProblemDetails
+            {
+                Title = "Referential integrity violation",
+                Detail = integrityCheck.Reason,
+                Status = 409
+            });
+        }
+        
         if (!await repository.DeletePermissionAsync(name, ct))
         {
             logger.LogWarning("Permission {PermissionName} not found for deletion", name);
             return NotFound();
         }
         return NoContent();
+    }
+
+    /// <summary>
+    /// Gets dependencies that would prevent deletion of a permission
+    /// </summary>
+    /// <param name="name">Permission name</param>
+    /// <returns>List of groups and users using this permission</returns>
+    /// <response code="200">Dependencies retrieved successfully</response>
+    [HttpGet("permissions/{name}/dependencies")]
+    [ProducesResponseType(typeof(PermissionDependencies), 200)]
+    public async Task<IActionResult> GetPermissionDependencies(string name)
+    {
+        var dependencies = await integrityChecker.GetPermissionDependenciesAsync(name);
+        return Ok(dependencies);
     }
 
     /// <summary>

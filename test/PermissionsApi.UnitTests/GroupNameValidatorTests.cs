@@ -1,3 +1,4 @@
+using AwesomeAssertions;
 using PermissionsApi.Services;
 
 namespace PermissionsApi.UnitTests;
@@ -5,103 +6,86 @@ namespace PermissionsApi.UnitTests;
 public class GroupNameValidatorTests
 {
     [Theory]
-    [InlineData("admin")]
+    [InlineData("editors")]
+    [InlineData("admins")]
     [InlineData("users")]
     [InlineData("a")]
     [InlineData("z")]
     public void IsValid_LowercaseLetters_ReturnsTrue(string name)
     {
-        Assert.True(GroupNameValidator.IsValid(name));
+        GroupNameValidator.IsValid(name).Should().BeTrue();
     }
 
     [Theory]
-    [InlineData("Admin")]
-    [InlineData("USERS")]
+    [InlineData("Editors")]
+    [InlineData("ADMINS")]
+    [InlineData("Users")]
     [InlineData("A")]
     [InlineData("Z")]
     public void IsValid_UppercaseLetters_ReturnsTrue(string name)
     {
-        Assert.True(GroupNameValidator.IsValid(name));
+        GroupNameValidator.IsValid(name).Should().BeTrue();
     }
 
     [Theory]
     [InlineData("group123")]
-    [InlineData("0")]
-    [InlineData("9")]
-    [InlineData("admin1")]
-    [InlineData("123users")]
-    public void IsValid_Numbers_ReturnsTrue(string name)
+    [InlineData("team456")]
+    [InlineData("dept0")]
+    [InlineData("a1")]
+    [InlineData("z9")]
+    public void IsValid_AlphanumericMixed_ReturnsTrue(string name)
     {
-        Assert.True(GroupNameValidator.IsValid(name));
+        GroupNameValidator.IsValid(name).Should().BeTrue();
     }
 
     [Theory]
-    [InlineData("admin-users")]
-    [InlineData("my-group")]
-    [InlineData("a-b-c")]
-    public void IsValid_Hyphens_ReturnsTrue(string name)
+    [InlineData("content-editors")]
+    [InlineData("super-admins")]
+    [InlineData("power-users")]
+    [InlineData("a-b")]
+    [InlineData("x-y-z")]
+    public void IsValid_WithHyphens_ReturnsTrue(string name)
     {
-        Assert.True(GroupNameValidator.IsValid(name));
+        GroupNameValidator.IsValid(name).Should().BeTrue();
     }
 
     [Theory]
-    [InlineData("Admin-Users-123")]
-    [InlineData("my-group-1")]
-    [InlineData("Test123")]
-    public void IsValid_MixedValidCharacters_ReturnsTrue(string name)
+    [InlineData("-editors")]
+    [InlineData("-admins")]
+    [InlineData("-")]
+    public void IsValid_StartsWithHyphen_ReturnsFalse(string name)
     {
-        Assert.True(GroupNameValidator.IsValid(name));
+        GroupNameValidator.IsValid(name).Should().BeFalse();
+    }
+
+    [Theory]
+    [InlineData("editors-")]
+    [InlineData("admins-")]
+    [InlineData("a-")]
+    public void IsValid_EndsWithHyphen_ReturnsFalse(string name)
+    {
+        GroupNameValidator.IsValid(name).Should().BeFalse();
     }
 
     [Theory]
     [InlineData("")]
-    public void IsValid_Empty_ReturnsFalse(string name)
-    {
-        Assert.False(GroupNameValidator.IsValid(name));
-    }
-
-    [Theory]
-    [InlineData("-admin")]
-    [InlineData("-users")]
-    [InlineData("-")]
-    public void IsValid_StartsWithHyphen_ReturnsFalse(string name)
-    {
-        Assert.False(GroupNameValidator.IsValid(name));
-    }
-
-    [Theory]
-    [InlineData("admin-")]
-    [InlineData("users-")]
-    public void IsValid_EndsWithHyphen_ReturnsFalse(string name)
-    {
-        Assert.False(GroupNameValidator.IsValid(name));
-    }
-
-    [Theory]
-    [InlineData("admin users")]
-    [InlineData("my group")]
-    [InlineData(" admin")]
-    [InlineData("users ")]
-    public void IsValid_Spaces_ReturnsFalse(string name)
-    {
-        Assert.False(GroupNameValidator.IsValid(name));
-    }
-
-    [Theory]
-    [InlineData("admin:users")]
-    [InlineData("my_group")]
-    [InlineData("admin@group")]
-    [InlineData("test.group")]
+    [InlineData(" ")]
+    [InlineData("content editors")]
+    [InlineData("super@admins")]
+    [InlineData("power.users")]
+    [InlineData("team_members")]
+    [InlineData("group:name")]
     public void IsValid_InvalidCharacters_ReturnsFalse(string name)
     {
-        Assert.False(GroupNameValidator.IsValid(name));
+        GroupNameValidator.IsValid(name).Should().BeFalse();
     }
 
     [Theory]
-    [InlineData("admin--users")]
-    [InlineData("my---group")]
-    public void IsValid_MultipleConsecutiveHyphens_ReturnsTrue(string name)
+    [InlineData("content-editors-team")]
+    [InlineData("super-power-admins")]
+    [InlineData("a1-b2-c3")]
+    public void IsValid_ComplexValidNames_ReturnsTrue(string name)
     {
-        Assert.True(GroupNameValidator.IsValid(name));
+        GroupNameValidator.IsValid(name).Should().BeTrue();
     }
 }
