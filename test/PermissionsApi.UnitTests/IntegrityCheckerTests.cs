@@ -11,7 +11,7 @@ public class IntegrityCheckerTests
 
     public IntegrityCheckerTests()
     {
-        var logger = LoggerFactory.Create(builder => builder.AddConsole())
+        var logger = LoggerFactory.Create(builder => builder.SetMinimumLevel(LogLevel.None))
             .CreateLogger<PermissionsRepository>();
         var historyService = new HistoryService(TimeProvider.System);
         repository = new PermissionsRepository(logger, historyService);
