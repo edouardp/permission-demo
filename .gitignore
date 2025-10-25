@@ -245,3 +245,6 @@ TestResults/
 
 # .NET Aspire
 .aspire/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
