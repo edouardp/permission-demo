@@ -11,11 +11,14 @@ public class IntegrityCheckerTests
 
     public IntegrityCheckerTests()
     {
-        var logger = LoggerFactory.Create(builder => builder.SetMinimumLevel(LogLevel.None))
-            .CreateLogger<PermissionsRepository>();
-        var historyService = new HistoryService(TimeProvider.System);
-        repository = new PermissionsRepository(logger, historyService);
-        checker = new IntegrityChecker(repository);
+        var loggerFactory = LoggerFactory.Create(builder => builder.SetMinimumLevel(LogLevel.None));
+        var repoLogger = loggerFactory.CreateLogger<PermissionsRepository>();
+        var historyLogger = loggerFactory.CreateLogger<HistoryService>();
+        var checkerLogger = loggerFactory.CreateLogger<IntegrityChecker>();
+        
+        var historyService = new HistoryService(TimeProvider.System, historyLogger);
+        repository = new PermissionsRepository(repoLogger, historyService);
+        checker = new IntegrityChecker(repository, checkerLogger);
     }
 
     [Fact]

@@ -1,9 +1,10 @@
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.Logging;
 using Reqnroll;
 
 namespace PermissionsAPI.ReqNRoll;
 
+[UsedImplicitly]
 public class TestWebApplicationFactory : WebApplicationFactory<PermissionsApi.Program>
 {
     protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)

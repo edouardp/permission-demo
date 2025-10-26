@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using PermissionsApi.Exceptions;
 using PermissionsApi.Models;
 using PermissionsApi.Services;
 
@@ -27,18 +28,26 @@ public class PermissionController(
     [ProducesResponseType(400)]
     public async Task<IActionResult> CreatePermission([FromBody] CreatePermissionRequest request, CancellationToken ct)
     {
-        if (!PermissionNameValidator.IsValid(request.Name))
+        try
         {
-            return Problem(
-                title: "Invalid Permission Name",
-                detail: PermissionNameValidator.ValidationRules,
-                statusCode: 400
-            );
-        }
+            if (!PermissionNameValidator.IsValid(request.Name))
+            {
+                return Problem(
+                    title: "Invalid Permission Name",
+                    detail: PermissionNameValidator.ValidationRules,
+                    statusCode: 400
+                );
+            }
 
-        logger.LogInformation("Creating permission {PermissionName} (IsDefault: {IsDefault})", request.Name, request.IsDefault);
-        var permission = await repository.CreatePermissionAsync(request.Name, request.Description, request.IsDefault, ct, request.Principal, request.Reason);
-        return CreatedAtAction(nameof(GetPermission), new { name = permission.Name }, permission);
+            logger.LogInformation("Creating permission {PermissionName} (IsDefault: {IsDefault})", request.Name, request.IsDefault);
+            var permission = await repository.CreatePermissionAsync(request.Name, request.Description, request.IsDefault, ct, request.Principal, request.Reason);
+            return CreatedAtAction(nameof(GetPermission), new { name = permission.Name }, permission);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to create permission {PermissionName}", request.Name);
+            throw new OperationException("Operation failed", ex);
+        }
     }
 
     /// <summary>

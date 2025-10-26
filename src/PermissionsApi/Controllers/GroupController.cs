@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using PermissionsApi.Exceptions;
 using PermissionsApi.Models;
 using PermissionsApi.Services;
 
@@ -27,18 +28,26 @@ public class GroupController(
     [ProducesResponseType(400)]
     public async Task<IActionResult> CreateGroup([FromBody] CreateGroupRequest request, CancellationToken ct)
     {
-        if (!GroupNameValidator.IsValid(request.Name))
+        try
         {
-            return Problem(
-                title: "Invalid Group Name",
-                detail: GroupNameValidator.ValidationRules,
-                statusCode: 400
-            );
-        }
+            if (!GroupNameValidator.IsValid(request.Name))
+            {
+                return Problem(
+                    title: "Invalid Group Name",
+                    detail: GroupNameValidator.ValidationRules,
+                    statusCode: 400
+                );
+            }
 
-        logger.LogInformation("Creating group {GroupName}", request.Name);
-        var group = await repository.CreateGroupAsync(request.Name, ct, request.Principal, request.Reason);
-        return CreatedAtAction(nameof(CreateGroup), new { id = group.Id, name = group.Name });
+            logger.LogInformation("Creating group {GroupName}", request.Name);
+            var group = await repository.CreateGroupAsync(request.Name, ct, request.Principal, request.Reason);
+            return CreatedAtAction(nameof(CreateGroup), new { id = group.Id, name = group.Name });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to create group {GroupName}", request.Name);
+            throw new OperationException("Operation failed", ex);
+        }
     }
 
     /// <summary>

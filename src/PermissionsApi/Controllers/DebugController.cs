@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using PermissionsApi.Exceptions;
 using PermissionsApi.Models;
 using PermissionsApi.Services;
 
@@ -6,7 +7,7 @@ namespace PermissionsApi.Controllers;
 
 [ApiController]
 [Route("api/v1/user")]
-public class DebugController(IPermissionsRepository repository) : ControllerBase
+public class DebugController(IPermissionsRepository repository, ILogger<DebugController> logger) : ControllerBase
 {
     /// <summary>
     /// Debug permission resolution chain showing how each permission is calculated through Default → Group → User hierarchy
@@ -21,12 +22,24 @@ public class DebugController(IPermissionsRepository repository) : ControllerBase
     [ProducesResponseType(404)]
     public async Task<IActionResult> GetUserPermissionsDebug(string email, CancellationToken ct)
     {
-        var debug = await repository.CalculatePermissionsDebugAsync(email, ct);
-        if (debug == null)
+        try
         {
-            return NotFound();
-        }
+            logger.LogDebug("Getting permission debug info for user {Email}", email);
+            var debug = await repository.CalculatePermissionsDebugAsync(email, ct);
+            if (debug == null)
+            {
+                logger.LogWarning("User {Email} not found for debug request", email);
+                return NotFound();
+            }
 
-        return Ok(debug);
+            logger.LogDebug("Successfully retrieved debug info for user {Email} with {PermissionCount} permissions", 
+                email, debug.Permissions.Count);
+            return Ok(debug);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to get debug info for user {Email}", email);
+            throw new OperationException("Operation failed", ex);
+        }
     }
 }

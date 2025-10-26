@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using PermissionsApi.Exceptions;
 using PermissionsApi.Models;
 using PermissionsApi.Services;
 
@@ -26,21 +27,29 @@ public class UserController(
     [ProducesResponseType(404)]
     public async Task<IActionResult> GetPermissions(string email, CancellationToken ct)
     {
-        var permissions = await repository.CalculatePermissionsAsync(email, ct);
-        if (permissions == null)
+        try
         {
-            logger.LogWarning("User {Email} not found", email);
-            return NotFound();
-        }
+            var permissions = await repository.CalculatePermissionsAsync(email, ct);
+            if (permissions == null)
+            {
+                logger.LogWarning("User {Email} not found", email);
+                return NotFound();
+            }
 
-        var response = new PermissionsResponse 
-        { 
-            Email = email,
-            Allow = permissions.Where(p => p.Value).Select(p => p.Key).OrderBy(p => p).ToList(),
-            Deny = permissions.Where(p => !p.Value).Select(p => p.Key).OrderBy(p => p).ToList()
-        };
-        
-        return Ok(response);
+            var response = new PermissionsResponse 
+            { 
+                Email = email,
+                Allow = permissions.Where(p => p.Value).Select(p => p.Key).OrderBy(p => p).ToList(),
+                Deny = permissions.Where(p => !p.Value).Select(p => p.Key).OrderBy(p => p).ToList()
+            };
+            
+            return Ok(response);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to get permissions for user {Email}", email);
+            throw new OperationException("Operation failed", ex);
+        }
     }
 
     /// <summary>
@@ -56,18 +65,26 @@ public class UserController(
     [ProducesResponseType(400)]
     public async Task<IActionResult> CreateUser([FromBody] CreateUserRequest request, CancellationToken ct)
     {
-        if (!EmailValidator.IsValid(request.Email))
+        try
         {
-            return Problem(
-                title: "Invalid Email",
-                detail: EmailValidator.ValidationRules,
-                statusCode: 400
-            );
-        }
+            if (!EmailValidator.IsValid(request.Email))
+            {
+                return Problem(
+                    title: "Invalid Email",
+                    detail: EmailValidator.ValidationRules,
+                    statusCode: 400
+                );
+            }
 
-        logger.LogInformation("Creating user {Email}", request.Email);
-        await repository.CreateUserAsync(request.Email, request.Groups, ct, request.Principal, request.Reason);
-        return CreatedAtAction(nameof(CreateUser), null);
+            logger.LogInformation("Creating user {Email}", request.Email);
+            await repository.CreateUserAsync(request.Email, request.Groups, ct, request.Principal, request.Reason);
+            return CreatedAtAction(nameof(CreateUser), null);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to create user {Email}", request.Email);
+            throw new OperationException("Operation failed", ex);
+        }
     }
 
     /// <summary>

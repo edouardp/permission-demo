@@ -1,21 +1,33 @@
 using System.Reflection;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using PermissionsApi.Models;
 
 namespace PermissionsApi.Services;
 
 public static class BuildInfoService
 {
+    private static readonly ILogger Logger = LoggerFactory.Create(builder => builder.AddConsole()).CreateLogger(typeof(BuildInfoService));
+
     public static (GitInfo Git, CiInfo? Ci, BuildInfo? Build, AssemblyInfo[] Assemblies) GetBuildInfo()
     {
         try
         {
+            Logger.LogDebug("Getting build information");
             var assembly = Assembly.GetExecutingAssembly();
             var assemblyDir = Path.GetDirectoryName(assembly.Location);
-            if (assemblyDir == null) return (GetFallbackGitInfo(), null, null, GetLoadedAssemblies());
+            if (assemblyDir == null)
+            {
+                Logger.LogWarning("Could not determine assembly directory for build info");
+                return (GetFallbackGitInfo(), null, null, GetLoadedAssemblies());
+            }
             
             var buildInfoPath = Path.Combine(assemblyDir, "build-info.json");
-            if (!File.Exists(buildInfoPath)) return (GetFallbackGitInfo(), null, null, GetLoadedAssemblies());
+            if (!File.Exists(buildInfoPath))
+            {
+                Logger.LogDebug("Build info file not found at {BuildInfoPath}, using fallback", buildInfoPath);
+                return (GetFallbackGitInfo(), null, null, GetLoadedAssemblies());
+            }
             
             var json = File.ReadAllText(buildInfoPath);
             var buildInfo = JsonSerializer.Deserialize<JsonElement>(json);
@@ -25,10 +37,12 @@ public static class BuildInfoService
             var build = ParseBuildInfo(buildInfo.GetProperty("build"));
             var assemblies = GetLoadedAssemblies();
             
+            Logger.LogDebug("Successfully retrieved build info with {AssemblyCount} assemblies", assemblies.Length);
             return (git, ci, build, assemblies);
         }
-        catch
+        catch (Exception ex)
         {
+            Logger.LogWarning(ex, "Failed to get build information, using fallback");
             return (GetFallbackGitInfo(), null, null, GetLoadedAssemblies());
         }
     }

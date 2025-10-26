@@ -1,13 +1,21 @@
+using Microsoft.Extensions.Logging;
 using PermissionsApi.Models;
+using Serilog.Context;
 
 namespace PermissionsApi.Services;
 
-public class HistoryService(TimeProvider timeProvider) : IHistoryService
+public class HistoryService(TimeProvider timeProvider, ILogger<HistoryService> logger) : IHistoryService
 {
     private readonly List<HistoryEntry> history = [];
 
     public Task RecordChangeAsync(string changeType, string entityType, string entityId, IEntity entityAfterChange, string? principal = null, string? reason = null)
     {
+        using var changeTypeContext = LogContext.PushProperty("ChangeType", changeType);
+        using var entityTypeContext = LogContext.PushProperty("EntityType", entityType);
+        using var entityIdContext = LogContext.PushProperty("EntityId", entityId);
+        using var principalContext = LogContext.PushProperty("Principal", principal);
+        
+        logger.LogDebug("Recording history entry with reason: {Reason}", reason);
         var entry = new HistoryEntry(
             timeProvider.GetUtcNow().DateTime,
             changeType,
