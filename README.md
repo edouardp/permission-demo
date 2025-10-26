@@ -498,6 +498,9 @@ curl /api/v1/groups/{id}/dependencies
 # Build
 dotnet build
 
+# Generate build info (optional - for version endpoint)
+python3 scripts/create-build-info.py src/PermissionsApi/bin/Debug/net9.0/
+
 # Run tests
 dotnet test
 

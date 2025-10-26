@@ -13,7 +13,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PermissionsAPI.ReqNRoll", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PermissionsApi.UnitTests", "test\PermissionsApi.UnitTests\PermissionsApi.UnitTests.csproj", "{97C7847D-295E-404F-BB5F-843EC57A3C9C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PermissionsBff", "src\PermissionsBff\PermissionsBff.csproj", "{3A891924-6846-4274-A6EC-9669ABC145FE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PermissionsSharedBff", "src\PermissionsSharedBff\PermissionsSharedBff.csproj", "{3A891924-6846-4274-A6EC-9669ABC145FE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
