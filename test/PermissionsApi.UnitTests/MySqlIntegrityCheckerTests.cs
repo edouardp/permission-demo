@@ -1,3 +1,4 @@
+using AwesomeAssertions;
 using Microsoft.Extensions.Logging;
 using PermissionsApi.Services;
 using Xunit;
@@ -232,10 +233,10 @@ public class MySqlIntegrityCheckerTests(MySqlTestFixture fixture)
         var groupDeps = await Task.WhenAll(groupTasks);
 
         // Verify some permissions have dependencies
-        Assert.True(permissionDeps.Any(d => d.Groups.Count > 0 || d.Users.Count > 0));
+        permissionDeps.Should().Contain(d => d.Groups.Count > 0 || d.Users.Count > 0);
         
         // Verify some groups have user dependencies
-        Assert.True(groupDeps.Any(d => d.Users.Count > 0));
+        groupDeps.Should().Contain(d => d.Users.Count > 0);
 
         // Test concurrent dependency checks
         var concurrentTasks = new List<Task>();
