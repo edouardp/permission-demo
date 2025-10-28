@@ -1,6 +1,9 @@
 using Microsoft.Extensions.Logging;
+using MySqlConnector;
 using PermissionsApi.Models;
 using PermissionsApi.Services;
+using Polly;
+using Polly.Retry;
 using Xunit;
 
 namespace PermissionsApi.UnitTests;
@@ -9,6 +12,16 @@ namespace PermissionsApi.UnitTests;
 public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
 {
     private readonly MySqlTestFixture _fixture = fixture;
+    private static readonly ResiliencePipeline _retryPipeline = new ResiliencePipelineBuilder()
+        .AddRetry(new RetryStrategyOptions
+        {
+            MaxRetryAttempts = 5,
+            Delay = TimeSpan.FromMilliseconds(100),
+            BackoffType = DelayBackoffType.Exponential,
+            UseJitter = true,
+            ShouldHandle = new PredicateBuilder().Handle<MySqlException>(ex => ex.ErrorCode == MySqlErrorCode.LockDeadlock)
+        })
+        .Build();
 
     private MySqlPermissionsRepository CreateRepository()
     {
@@ -140,7 +153,9 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
                 await semaphore.WaitAsync();
                 try
                 {
-                    await repo.SetGroupPermissionsAsync(group.Name, groupPermissions, CancellationToken.None);
+                    await _retryPipeline.ExecuteAsync(async ct => 
+                        await repo.SetGroupPermissionsAsync(group.Name, groupPermissions, ct), 
+                        CancellationToken.None);
                 }
                 finally
                 {
@@ -218,7 +233,9 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
                     await semaphore.WaitAsync();
                     try
                     {
-                        return await repo.CreateUserAsync(email, userGroups, CancellationToken.None);
+                        return await _retryPipeline.ExecuteAsync(async ct => 
+                            await repo.CreateUserAsync(email, userGroups, ct), 
+                            CancellationToken.None);
                     }
                     finally
                     {
@@ -252,7 +269,9 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
                     await semaphore.WaitAsync();
                     try
                     {
-                        await repo.SetUserPermissionsAsync(user.Email, userPermissions, CancellationToken.None);
+                        await _retryPipeline.ExecuteAsync(async ct => 
+                            await repo.SetUserPermissionsAsync(user.Email, userPermissions, ct), 
+                            CancellationToken.None);
                     }
                     finally
                     {
