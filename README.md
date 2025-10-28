@@ -49,7 +49,7 @@ curl -X POST http://localhost:5000/api/v1/groups \
 # Create a user
 curl -X POST http://localhost:5000/api/v1/users \
   -H "Content-Type: application/json" \
-  -d '{"email": "user@example.com", "groups": ["<group-id>"]}'
+  -d '{"email": "user@example.com", "groups": ["editors"]}'
 
 # Get user's calculated permissions
 curl http://localhost:5000/api/v1/users/user@example.com/permissions
@@ -77,14 +77,13 @@ Permission
 └── isDefault: boolean
 
 Group
-├── id: string (GUID)
-├── name: string
+├── name: string (unique identifier)
 └── permissions: Dictionary<string, "ALLOW"|"DENY">
 
 User
 ├── email: string (unique identifier)
-├── groups: List<string> (group IDs)
-└── permissions: Dictionary<string, "ALLOW"|"DENY">
+├── groups: List<string> (group names)
+└── permissions: Dictionary<string, "ALLOW"|"DENY")
 ```
 
 ### Technology Stack
@@ -225,12 +224,12 @@ Content-Type: application/json
   "reason": "New team created"
 }
 ```
-Returns: `{"id": "guid", "name": "group-name", "permissions": {}}`
+Returns: `{"name": "group-name", "permissions": {}}`
 
 #### Set Group Permissions (Batch)
 
 ```http
-PUT /api/v1/groups/{id}/permissions
+PUT /api/v1/groups/{name}/permissions
 Content-Type: application/json
 
 {
@@ -245,7 +244,7 @@ Replaces all permissions for the group.
 #### Set Individual Group Permission
 
 ```http
-PUT /api/v1/groups/{id}/permissions/{name}
+PUT /api/v1/groups/{name}/permissions/{name}
 Content-Type: application/json
 
 {
@@ -258,25 +257,24 @@ Content-Type: application/json
 #### Remove Group Permission
 
 ```http
-DELETE /api/v1/groups/{id}/permissions/{name}
+DELETE /api/v1/groups/{name}/permissions/{name}
 ```
 
 #### Delete Group
 
 ```http
-DELETE /api/v1/groups/{id}
+DELETE /api/v1/groups/{name}
 ```
 Returns 409 Conflict if group is assigned to any users.
 
 #### Get Group Dependencies
 
 ```http
-GET /api/v1/groups/{id}/dependencies
+GET /api/v1/groups/{name}/dependencies
 ```
 Returns:
 ```json
 {
-  "groupId": "guid",
   "groupName": "editors",
   "users": ["user1@example.com", "user2@example.com"]  // Alphabetically sorted
 }
@@ -285,7 +283,7 @@ Returns:
 #### Get Group History
 
 ```http
-GET /api/v1/groups/{id}/history
+GET /api/v1/groups/{name}/history
 ```
 
 ### Users
@@ -368,7 +366,7 @@ GET /api/v1/users/{email}/history
 #### Debug Permission Resolution
 
 ```http
-GET /api/v1/user/{email}/debug
+GET /api/v1/users/{email}/debug
 ```
 
 Returns detailed resolution chain for all permissions:
@@ -620,12 +618,12 @@ curl -X POST /api/v1/permissions \
 
 # Editor workflow (can create but not publish)
 curl -X POST /api/v1/groups -d '{"name": "content-editors"}'
-curl -X PUT /api/v1/groups/{id}/permissions \
+curl -X PUT /api/v1/groups/content-editors/permissions \
   -d '{"allow": ["content:create"], "deny": ["content:publish"]}'
 
 # Publisher workflow (can do both)
 curl -X POST /api/v1/groups -d '{"name": "content-publishers"}'
-curl -X PUT /api/v1/groups/{id}/permissions \
+curl -X PUT /api/v1/groups/content-publishers/permissions \
   -d '{"allow": ["content:create", "content:publish"]}'
 ```
 
@@ -662,6 +660,7 @@ curl /api/v1/users/contractor@example.com/history
 ## Architecture Decisions
 
 - **In-memory storage**: Simplicity and testability (easily replaceable with EF Core)
+- **Group names as identifiers**: Human-readable URLs and intuitive API design
 - **Alphabetical group ordering**: Deterministic behavior without explicit priorities
 - **PUT for batch operations**: Idempotent full replacement semantics
 - **Referential integrity**: Prevents orphaned references and data inconsistency

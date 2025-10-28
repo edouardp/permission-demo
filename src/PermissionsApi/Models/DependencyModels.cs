@@ -30,12 +30,6 @@ public record PermissionDependencies
 public record GroupDependencies
 {
     /// <summary>
-    /// Group ID
-    /// </summary>
-    /// <example>abc123</example>
-    public required string GroupId { get; init; }
-    
-    /// <summary>
     /// Group name
     /// </summary>
     /// <example>editors</example>

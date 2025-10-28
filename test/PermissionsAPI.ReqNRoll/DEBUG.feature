@@ -98,7 +98,6 @@ Feature: Permission Debug Endpoint
     Content-Type: application/json
 
     {
-      "id": [[ADMIN_GROUP_ID]],
       "name": "{{ADMIN_GROUP}}"
     }
     """
@@ -106,7 +105,7 @@ Feature: Permission Debug Endpoint
     # Set group permissions: ALLOW write, DENY delete
     Given the following request
     """
-    PUT /api/v1/groups/{{ADMIN_GROUP_ID}}/permissions HTTP/1.1
+    PUT /api/v1/groups/{{ADMIN_GROUP}}/permissions HTTP/1.1
     Content-Type: application/json
 
     {
@@ -128,7 +127,7 @@ Feature: Permission Debug Endpoint
 
     {
       "email": "{{USER_EMAIL}}",
-      "groups": ["{{ADMIN_GROUP_ID}}"]
+      "groups": ["{{ADMIN_GROUP}}"]
     }
     """
 
@@ -156,7 +155,7 @@ Feature: Permission Debug Endpoint
     # Test debug endpoint - should show complete chain
     Given the following request
     """
-    GET /api/v1/user/{{USER_EMAIL}}/debug HTTP/1.1
+    GET /api/v1/users/{{USER_EMAIL}}/debug HTTP/1.1
     """
 
     Then the API returns the following response
@@ -232,7 +231,7 @@ Feature: Permission Debug Endpoint
 
     Given the following request
     """
-    DELETE /api/v1/groups/{{ADMIN_GROUP_ID}} HTTP/1.1
+    DELETE /api/v1/groups/{{ADMIN_GROUP}} HTTP/1.1
     """
 
     Then the API returns the following response

@@ -113,7 +113,6 @@ Feature: Dependencies
     Content-Type: application/json
 
     {
-      "id": [[GROUP_A_ID]],
       "name": "{{GROUP_A}}"
     }
     """
@@ -135,7 +134,6 @@ Feature: Dependencies
     Content-Type: application/json
 
     {
-      "id": [[GROUP_B_ID]],
       "name": "{{GROUP_B}}"
     }
     """
@@ -143,7 +141,7 @@ Feature: Dependencies
     # Assign permission to first group with ALLOW
     Given the following request
     """
-    PUT /api/v1/groups/{{GROUP_A_ID}}/permissions/{{PERM_NAME}} HTTP/1.1
+    PUT /api/v1/groups/{{GROUP_A}}/permissions/{{PERM_NAME}} HTTP/1.1
     Content-Type: application/json
 
     {
@@ -159,7 +157,7 @@ Feature: Dependencies
     # Assign permission to second group with DENY
     Given the following request
     """
-    PUT /api/v1/groups/{{GROUP_B_ID}}/permissions/{{PERM_NAME}} HTTP/1.1
+    PUT /api/v1/groups/{{GROUP_B}}/permissions/{{PERM_NAME}} HTTP/1.1
     Content-Type: application/json
 
     {
@@ -193,7 +191,7 @@ Feature: Dependencies
     # Cleanup - delete groups first, then permission
     Given the following request
     """
-    DELETE /api/v1/groups/{{GROUP_A_ID}} HTTP/1.1
+    DELETE /api/v1/groups/{{GROUP_A}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -203,7 +201,7 @@ Feature: Dependencies
 
     Given the following request
     """
-    DELETE /api/v1/groups/{{GROUP_B_ID}} HTTP/1.1
+    DELETE /api/v1/groups/{{GROUP_B}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -244,7 +242,6 @@ Feature: Dependencies
     Content-Type: application/json
 
     {
-      "id": [[GROUP_ID]],
       "name": "{{GROUP_NAME}}"
     }
     """
@@ -252,7 +249,7 @@ Feature: Dependencies
     # Check dependencies - should show empty users list
     Given the following request
     """
-    GET /api/v1/groups/{{GROUP_ID}}/dependencies HTTP/1.1
+    GET /api/v1/groups/{{GROUP_NAME}}/dependencies HTTP/1.1
     """
 
     Then the API returns the following response
@@ -261,7 +258,6 @@ Feature: Dependencies
     Content-Type: application/json
 
     {
-      "groupId": "{{GROUP_ID}}",
       "groupName": "{{GROUP_NAME}}",
       "users": []
     }
@@ -270,7 +266,7 @@ Feature: Dependencies
     # Cleanup - delete the group
     Given the following request
     """
-    DELETE /api/v1/groups/{{GROUP_ID}} HTTP/1.1
+    DELETE /api/v1/groups/{{GROUP_NAME}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -327,7 +323,6 @@ Feature: Dependencies
     Content-Type: application/json
 
     {
-      "id": [[GROUP_ID]],
       "name": "{{GROUP_NAME}}"
     }
     """
@@ -335,7 +330,7 @@ Feature: Dependencies
     # Assign permission to the group
     Given the following request
     """
-    PUT /api/v1/groups/{{GROUP_ID}}/permissions/{{PERM_NAME}} HTTP/1.1
+    PUT /api/v1/groups/{{GROUP_NAME}}/permissions/{{PERM_NAME}} HTTP/1.1
     Content-Type: application/json
 
     {
@@ -368,7 +363,7 @@ Feature: Dependencies
     # Cleanup - remove permission from group first, then delete both
     Given the following request
     """
-    DELETE /api/v1/groups/{{GROUP_ID}}/permissions/{{PERM_NAME}} HTTP/1.1
+    DELETE /api/v1/groups/{{GROUP_NAME}}/permissions/{{PERM_NAME}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -378,7 +373,7 @@ Feature: Dependencies
 
     Given the following request
     """
-    DELETE /api/v1/groups/{{GROUP_ID}} HTTP/1.1
+    DELETE /api/v1/groups/{{GROUP_NAME}} HTTP/1.1
     """
 
     Then the API returns the following response

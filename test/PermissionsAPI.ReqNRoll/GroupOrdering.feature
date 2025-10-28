@@ -52,7 +52,6 @@ Feature: Group Ordering
     Content-Type: application/json
 
     {
-      "id": [[GAMMA_ID]],
       "name": "{{GROUP_GAMMA}}"
     }
     """
@@ -73,7 +72,6 @@ Feature: Group Ordering
     Content-Type: application/json
 
     {
-      "id": [[ALPHA_ID]],
       "name": "{{GROUP_ALPHA}}"
     }
     """
@@ -94,15 +92,15 @@ Feature: Group Ordering
     Content-Type: application/json
 
     {
-      "id": [[BETA_ID]],
       "name": "{{GROUP_BETA}}"
     }
     """
 
-    # Set conflicting permissions: alpha=ALLOW, beta=DENY, gamma=ALLOW
+    # Set permissions on groups
+    # Alpha: ALLOW (alphabetically first)
     Given the following request
     """
-    PUT /api/v1/groups/{{ALPHA_ID}}/permissions HTTP/1.1
+    PUT /api/v1/groups/{{GROUP_ALPHA}}/permissions HTTP/1.1
     Content-Type: application/json
 
     {
@@ -116,9 +114,10 @@ Feature: Group Ordering
     HTTP/1.1 200 OK
     """
 
+    # Beta: DENY (alphabetically second)
     Given the following request
     """
-    PUT /api/v1/groups/{{BETA_ID}}/permissions HTTP/1.1
+    PUT /api/v1/groups/{{GROUP_BETA}}/permissions HTTP/1.1
     Content-Type: application/json
 
     {
@@ -132,9 +131,10 @@ Feature: Group Ordering
     HTTP/1.1 200 OK
     """
 
+    # Gamma: ALLOW (alphabetically third - should win)
     Given the following request
     """
-    PUT /api/v1/groups/{{GAMMA_ID}}/permissions HTTP/1.1
+    PUT /api/v1/groups/{{GROUP_GAMMA}}/permissions HTTP/1.1
     Content-Type: application/json
 
     {
@@ -156,7 +156,7 @@ Feature: Group Ordering
 
     {
       "email": "{{USER_EMAIL}}",
-      "groups": ["{{GAMMA_ID}}", "{{ALPHA_ID}}", "{{BETA_ID}}"]
+      "groups": ["{{GROUP_GAMMA}}", "{{GROUP_ALPHA}}", "{{GROUP_BETA}}"]
     }
     """
 
@@ -165,7 +165,9 @@ Feature: Group Ordering
     HTTP/1.1 201 Created
     """
 
-    # Verify permission is ALLOW (gamma wins as it's last alphabetically)
+    # Verify that gamma (alphabetically last) wins with ALLOW
+    # Processing order should be: alpha (ALLOW) -> beta (DENY) -> gamma (ALLOW)
+    # Final result: ALLOW (gamma wins)
     Given the following request
     """
     GET /api/v1/users/{{USER_EMAIL}}/permissions HTTP/1.1
@@ -183,10 +185,10 @@ Feature: Group Ordering
     }
     """
 
-    # Verify debug shows alphabetical processing: alpha (ALLOW) -> beta (DENY) -> gamma (ALLOW)
+    # Verify debug shows correct processing order
     Given the following request
     """
-    GET /api/v1/user/{{USER_EMAIL}}/debug HTTP/1.1
+    GET /api/v1/users/{{USER_EMAIL}}/debug HTTP/1.1
     """
 
     Then the API returns the following response
@@ -227,7 +229,7 @@ Feature: Group Ordering
     }
     """
 
-    # Cleanup
+    # Cleanup: Delete user
     Given the following request
     """
     DELETE /api/v1/users/{{USER_EMAIL}} HTTP/1.1
@@ -238,9 +240,10 @@ Feature: Group Ordering
     HTTP/1.1 204 NoContent
     """
 
+    # Cleanup: Delete groups
     Given the following request
     """
-    DELETE /api/v1/groups/{{ALPHA_ID}} HTTP/1.1
+    DELETE /api/v1/groups/{{GROUP_ALPHA}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -250,7 +253,7 @@ Feature: Group Ordering
 
     Given the following request
     """
-    DELETE /api/v1/groups/{{BETA_ID}} HTTP/1.1
+    DELETE /api/v1/groups/{{GROUP_BETA}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -260,7 +263,7 @@ Feature: Group Ordering
 
     Given the following request
     """
-    DELETE /api/v1/groups/{{GAMMA_ID}} HTTP/1.1
+    DELETE /api/v1/groups/{{GROUP_GAMMA}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -268,6 +271,7 @@ Feature: Group Ordering
     HTTP/1.1 204 NoContent
     """
 
+    # Cleanup: Delete permission
     Given the following request
     """
     DELETE /api/v1/permissions/{{TEST_PERMISSION}} HTTP/1.1

@@ -52,7 +52,7 @@ Feature: Groups
     HTTP/1.1 201 Created
 
     {
-      "id": [[GROUP_ID]]
+      "name": "{{GROUP_NAME}}"
     }
     """
 
@@ -60,7 +60,7 @@ Feature: Groups
     # This should override the default "read": true
     Given the following request
     """
-    PUT /api/v1/groups/{{GROUP_ID}}/permissions HTTP/1.1
+    PUT /api/v1/groups/{{GROUP_NAME}}/permissions HTTP/1.1
     Content-Type: application/json
 
     {
@@ -82,7 +82,7 @@ Feature: Groups
 
     {
       "email": "{{USER_EMAIL}}",
-      "groups": ["{{GROUP_ID}}"]
+      "groups": ["{{GROUP_NAME}}"]
     }
     """
 
@@ -124,7 +124,7 @@ Feature: Groups
     # Cleanup: Delete group
     Given the following request
     """
-    DELETE /api/v1/groups/{{GROUP_ID}} HTTP/1.1
+    DELETE /api/v1/groups/{{GROUP_NAME}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -154,14 +154,14 @@ Feature: Groups
     HTTP/1.1 201 Created
 
     {
-      "id": [[GROUP_ID]]
+      "name": "{{GROUP_NAME}}"
     }
     """
 
     # Attempt to set a non-existent permission
     Given the following request
     """
-    PUT /api/v1/groups/{{GROUP_ID}}/permissions HTTP/1.1
+    PUT /api/v1/groups/{{GROUP_NAME}}/permissions HTTP/1.1
     Content-Type: application/json
 
     {
@@ -186,7 +186,7 @@ Feature: Groups
     # Cleanup: Delete group
     Given the following request
     """
-    DELETE /api/v1/groups/{{GROUP_ID}} HTTP/1.1
+    DELETE /api/v1/groups/{{GROUP_NAME}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -215,14 +215,14 @@ Feature: Groups
     HTTP/1.1 201 Created
 
     {
-      "id": [[GROUP_ID]]
+      "name": "{{GROUP_NAME}}"
     }
     """
 
     # Set individual permission
     Given the following request
     """
-    PUT /api/v1/groups/{{GROUP_ID}}/permissions/read HTTP/1.1
+    PUT /api/v1/groups/{{GROUP_NAME}}/permissions/read HTTP/1.1
     Content-Type: application/json
 
     {
@@ -244,7 +244,7 @@ Feature: Groups
 
     {
       "email": "{{USER_EMAIL}}",
-      "groups": ["{{GROUP_ID}}"]
+      "groups": ["{{GROUP_NAME}}"]
     }
     """
 
@@ -274,7 +274,7 @@ Feature: Groups
     # Remove individual permission
     Given the following request
     """
-    DELETE /api/v1/groups/{{GROUP_ID}}/permissions/read HTTP/1.1
+    DELETE /api/v1/groups/{{GROUP_NAME}}/permissions/read HTTP/1.1
     """
 
     Then the API returns the following response
@@ -314,7 +314,7 @@ Feature: Groups
     # Cleanup: Delete group
     Given the following request
     """
-    DELETE /api/v1/groups/{{GROUP_ID}} HTTP/1.1
+    DELETE /api/v1/groups/{{GROUP_NAME}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -344,14 +344,14 @@ Feature: Groups
     HTTP/1.1 201 Created
 
     {
-      "id": [[GROUP_ID]]
+      "name": "{{GROUP_NAME}}"
     }
     """
 
     # Attempt to set a non-existent individual permission
     Given the following request
     """
-    PUT /api/v1/groups/{{GROUP_ID}}/permissions/invalid-permission HTTP/1.1
+    PUT /api/v1/groups/{{GROUP_NAME}}/permissions/invalid-permission HTTP/1.1
     Content-Type: application/json
 
     {
@@ -375,7 +375,7 @@ Feature: Groups
     # Cleanup: Delete group
     Given the following request
     """
-    DELETE /api/v1/groups/{{GROUP_ID}} HTTP/1.1
+    DELETE /api/v1/groups/{{GROUP_NAME}} HTTP/1.1
     """
 
     Then the API returns the following response

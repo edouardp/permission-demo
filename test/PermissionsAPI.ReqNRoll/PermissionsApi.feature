@@ -159,7 +159,6 @@ Feature: Permissions API Integration
     Content-Type: application/json
 
     {
-      "id": [[GROUP_ID]],
       "name": "{{GROUP_NAME}}"
     }
     """
@@ -167,7 +166,7 @@ Feature: Permissions API Integration
     # Grant "write" permission to the group
     Given the following request
     """
-    PUT /api/v1/groups/{{GROUP_ID}}/permissions HTTP/1.1
+    PUT /api/v1/groups/{{GROUP_NAME}}/permissions HTTP/1.1
     Content-Type: application/json
 
     {
@@ -189,7 +188,7 @@ Feature: Permissions API Integration
 
     {
       "email": "{{USER_EMAIL}}",
-      "groups": ["{{GROUP_ID}}"]
+      "groups": ["{{GROUP_NAME}}"]
     }
     """
 
@@ -230,7 +229,7 @@ Feature: Permissions API Integration
     # Cleanup: Delete group
     Given the following request
     """
-    DELETE /api/v1/groups/{{GROUP_ID}} HTTP/1.1
+    DELETE /api/v1/groups/{{GROUP_NAME}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -263,14 +262,14 @@ Feature: Permissions API Integration
     HTTP/1.1 201 Created
 
     {
-      "id": [[GROUP_ID]]
+      "name": "{{GROUP_NAME}}"
     }
     """
 
     # Group denies "delete" permission
     Given the following request
     """
-    PUT /api/v1/groups/{{GROUP_ID}}/permissions HTTP/1.1
+    PUT /api/v1/groups/{{GROUP_NAME}}/permissions HTTP/1.1
     Content-Type: application/json
 
     {
@@ -292,7 +291,7 @@ Feature: Permissions API Integration
 
     {
       "email": "{{USER_EMAIL}}",
-      "groups": ["{{GROUP_ID}}"]
+      "groups": ["{{GROUP_NAME}}"]
     }
     """
 
@@ -352,7 +351,7 @@ Feature: Permissions API Integration
     # Cleanup: Delete group
     Given the following request
     """
-    DELETE /api/v1/groups/{{GROUP_ID}} HTTP/1.1
+    DELETE /api/v1/groups/{{GROUP_NAME}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -385,7 +384,7 @@ Feature: Permissions API Integration
     HTTP/1.1 201 Created
 
     {
-      "id": [[EDITORS_GROUP_ID]]
+      "name": "{{EDITORS_GROUP_NAME}}"
     }
     """
 
@@ -405,14 +404,14 @@ Feature: Permissions API Integration
     HTTP/1.1 201 Created
 
     {
-      "id": [[ADMINS_GROUP_ID]]
+      "name": "{{ADMINS_GROUP_NAME}}"
     }
     """
 
     # Grant "write" permission to editors group
     Given the following request
     """
-    PUT /api/v1/groups/{{EDITORS_GROUP_ID}}/permissions HTTP/1.1
+    PUT /api/v1/groups/{{EDITORS_GROUP_NAME}}/permissions HTTP/1.1
     Content-Type: application/json
 
     {
@@ -429,7 +428,7 @@ Feature: Permissions API Integration
     # Grant "delete" permission to admins group
     Given the following request
     """
-    PUT /api/v1/groups/{{ADMINS_GROUP_ID}}/permissions HTTP/1.1
+    PUT /api/v1/groups/{{ADMINS_GROUP_NAME}}/permissions HTTP/1.1
     Content-Type: application/json
 
     {
@@ -451,7 +450,7 @@ Feature: Permissions API Integration
 
     {
       "email": "{{USER_EMAIL}}",
-      "groups": ["{{EDITORS_GROUP_ID}}", "{{ADMINS_GROUP_ID}}"]
+      "groups": ["{{EDITORS_GROUP_NAME}}", "{{ADMINS_GROUP_NAME}}"]
     }
     """
 
@@ -493,7 +492,7 @@ Feature: Permissions API Integration
     # Cleanup: Delete editors group
     Given the following request
     """
-    DELETE /api/v1/groups/{{EDITORS_GROUP_ID}} HTTP/1.1
+    DELETE /api/v1/groups/{{EDITORS_GROUP_NAME}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -504,7 +503,7 @@ Feature: Permissions API Integration
     # Cleanup: Delete admins group
     Given the following request
     """
-    DELETE /api/v1/groups/{{ADMINS_GROUP_ID}} HTTP/1.1
+    DELETE /api/v1/groups/{{ADMINS_GROUP_NAME}} HTTP/1.1
     """
 
     Then the API returns the following response

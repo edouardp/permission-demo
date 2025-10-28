@@ -6,7 +6,7 @@ using PermissionsApi.Services;
 namespace PermissionsApi.Controllers;
 
 [ApiController]
-[Route("api/v1/user")]
+[Route("api/v1/users")]
 public class DebugController(IPermissionsRepository repository, ILogger<DebugController> logger) : ControllerBase
 {
     /// <summary>
