@@ -40,7 +40,10 @@ public class MySqlPermissionsRepository(string connectionString, IHistoryService
         }
         catch
         {
-            await transaction.RollbackAsync(ct);
+            if (transaction.Connection != null)
+            {
+                await transaction.RollbackAsync(ct);
+            }
             throw;
         }
     }

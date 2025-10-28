@@ -145,12 +145,13 @@ public class MySqlIntegrityCheckerTests(MySqlTestFixture fixture)
         var checker = CreateChecker();
         var repo = CreateRepository();
         var random = new Random(42);
+        var testId = Guid.NewGuid().ToString("N")[..8];
 
         // Create 100 permissions
         var permissions = new List<string>();
         for (int i = 0; i < 100; i++)
         {
-            var permName = $"scale-perm-{i}";
+            var permName = $"scale-perm-{testId}-{i}";
             permissions.Add(permName);
             await repo.CreatePermissionAsync(permName, $"Scale permission {i}", random.Next(2) == 0, CancellationToken.None);
         }
@@ -159,7 +160,7 @@ public class MySqlIntegrityCheckerTests(MySqlTestFixture fixture)
         var groups = new List<string>();
         for (int i = 0; i < 50; i++)
         {
-            var groupName = $"scale-group-{i}";
+            var groupName = $"scale-group-{testId}-{i}";
             groups.Add(groupName);
             await repo.CreateGroupAsync(groupName, CancellationToken.None);
             
@@ -177,7 +178,7 @@ public class MySqlIntegrityCheckerTests(MySqlTestFixture fixture)
         var users = new List<string>();
         for (int i = 0; i < 200; i++)
         {
-            var userEmail = $"scale-user-{i}@test.com";
+            var userEmail = $"scale-user-{testId}-{i}@test.com";
             users.Add(userEmail);
             
             // Assign random groups to each user

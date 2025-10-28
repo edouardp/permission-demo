@@ -23,12 +23,13 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
         var repo = CreateRepository();
         var random = new Random(42);
         var permissions = new List<Permission>();
+        var testId = Guid.NewGuid().ToString("N")[..8];
 
         // Create 100 permissions with random properties
         var tasks = new List<Task<Permission>>();
         for (int i = 0; i < 100; i++)
         {
-            var name = $"scale-perm-{i}-{Guid.NewGuid()}";
+            var name = $"scale-perm-{testId}-{i}";
             var description = $"Scale test permission {i} - {random.Next(1000, 9999)}";
             var isDefault = random.Next(2) == 0;
             
@@ -72,12 +73,13 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
         var repo = CreateRepository();
         var random = new Random(42);
         var groups = new List<Group>();
+        var testId = Guid.NewGuid().ToString("N")[..8];
 
         // Create some permissions first
         var permissions = new List<string>();
         for (int i = 0; i < 20; i++)
         {
-            var permName = $"group-perm-{i}";
+            var permName = $"group-perm-{testId}-{i}";
             permissions.Add(permName);
             await repo.CreatePermissionAsync(permName, $"Permission {i}", false, CancellationToken.None);
         }
@@ -86,7 +88,7 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
         var tasks = new List<Task<Group>>();
         for (int i = 0; i < 100; i++)
         {
-            var name = $"scale-group-{i}-{Guid.NewGuid()}";
+            var name = $"scale-group-{testId}-{i}";
             tasks.Add(repo.CreateGroupAsync(name, CancellationToken.None));
         }
 
@@ -127,12 +129,13 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
     {
         var repo = CreateRepository();
         var random = new Random(42);
+        var testId = Guid.NewGuid().ToString("N")[..8];
 
         // Create groups first
         var groups = new List<string>();
         for (int i = 0; i < 20; i++)
         {
-            var groupName = $"user-group-{i}";
+            var groupName = $"user-group-{testId}-{i}";
             groups.Add(groupName);
             await repo.CreateGroupAsync(groupName, CancellationToken.None);
         }
@@ -141,7 +144,7 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
         var permissions = new List<string>();
         for (int i = 0; i < 10; i++)
         {
-            var permName = $"user-perm-{i}";
+            var permName = $"user-perm-{testId}-{i}";
             permissions.Add(permName);
             await repo.CreatePermissionAsync(permName, $"User permission {i}", false, CancellationToken.None);
         }
@@ -157,7 +160,7 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
             for (int i = 0; i < batchSize; i++)
             {
                 var userIndex = batch * batchSize + i;
-                var email = $"scale-user-{userIndex}@test.com";
+                var email = $"scale-user-{testId}-{userIndex}@test.com";
                 
                 // Assign random groups
                 var numGroups = random.Next(0, 5);
@@ -221,12 +224,13 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
     {
         var repo = CreateRepository();
         var random = new Random(42);
+        var testId = Guid.NewGuid().ToString("N")[..8];
 
         // Create 50 permissions with mixed defaults
         var permissions = new List<string>();
         for (int i = 0; i < 50; i++)
         {
-            var permName = $"calc-perm-{i}";
+            var permName = $"calc-perm-{testId}-{i}";
             permissions.Add(permName);
             var isDefault = random.Next(3) == 0; // 1/3 are default
             await repo.CreatePermissionAsync(permName, $"Calculation permission {i}", isDefault, CancellationToken.None);
@@ -236,7 +240,7 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
         var groups = new List<string>();
         for (int i = 0; i < 30; i++)
         {
-            var groupName = $"calc-group-{i}";
+            var groupName = $"calc-group-{testId}-{i}";
             groups.Add(groupName);
             await repo.CreateGroupAsync(groupName, CancellationToken.None);
             
@@ -258,7 +262,7 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
         var users = new List<string>();
         for (int i = 0; i < 200; i++)
         {
-            var email = $"calc-user-{i}@test.com";
+            var email = $"calc-user-{testId}-{i}@test.com";
             users.Add(email);
             
             // Each user belongs to 1-5 groups
@@ -342,25 +346,26 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
         var repo = CreateRepository();
         var random = new Random(42);
         var tasks = new List<Task>();
+        var testId = Guid.NewGuid().ToString("N")[..8];
 
         // Concurrent permission operations
         for (int i = 0; i < 50; i++)
         {
-            var permName = $"stress-perm-{i}";
+            var permName = $"stress-perm-{testId}-{i}";
             tasks.Add(repo.CreatePermissionAsync(permName, $"Stress permission {i}", random.Next(2) == 0, CancellationToken.None));
         }
 
         // Concurrent group operations
         for (int i = 0; i < 30; i++)
         {
-            var groupName = $"stress-group-{i}";
+            var groupName = $"stress-group-{testId}-{i}";
             tasks.Add(repo.CreateGroupAsync(groupName, CancellationToken.None));
         }
 
         // Concurrent user operations
         for (int i = 0; i < 100; i++)
         {
-            var email = $"stress-user-{i}@test.com";
+            var email = $"stress-user-{testId}-{i}@test.com";
             tasks.Add(repo.CreateUserAsync(email, [], CancellationToken.None));
         }
 
@@ -379,8 +384,8 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
         var assignmentTasks = new List<Task>();
         for (int i = 0; i < 50; i++)
         {
-            var groupName = $"stress-group-{random.Next(30)}";
-            var permName = $"stress-perm-{random.Next(50)}";
+            var groupName = $"stress-group-{testId}-{random.Next(30)}";
+            var permName = $"stress-perm-{testId}-{random.Next(50)}";
             var access = random.Next(2) == 0 ? "ALLOW" : "DENY";
             
             assignmentTasks.Add(repo.SetGroupPermissionAsync(groupName, permName, access, CancellationToken.None));
@@ -388,8 +393,8 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
 
         for (int i = 0; i < 100; i++)
         {
-            var email = $"stress-user-{random.Next(100)}@test.com";
-            var permName = $"stress-perm-{random.Next(50)}";
+            var email = $"stress-user-{testId}-{random.Next(100)}@test.com";
+            var permName = $"stress-perm-{testId}-{random.Next(50)}";
             var access = random.Next(2) == 0 ? "ALLOW" : "DENY";
             
             assignmentTasks.Add(repo.SetUserPermissionAsync(email, permName, access, CancellationToken.None));
@@ -401,7 +406,7 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
         var calculationTasks = new List<Task>();
         for (int i = 0; i < 50; i++)
         {
-            var email = $"stress-user-{random.Next(100)}@test.com";
+            var email = $"stress-user-{testId}-{random.Next(100)}@test.com";
             calculationTasks.Add(repo.CalculatePermissionsAsync(email, CancellationToken.None));
             calculationTasks.Add(repo.CalculatePermissionsDebugAsync(email, CancellationToken.None));
         }
