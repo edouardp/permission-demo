@@ -1,3 +1,4 @@
+using AwesomeAssertions;
 using Microsoft.Extensions.Logging;
 using PermissionsApi.Models;
 using PermissionsApi.Services;
@@ -40,7 +41,7 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
         var allPermissions = await repo.GetAllPermissionsAsync(CancellationToken.None);
         foreach (var perm in permissions)
         {
-            Assert.Contains(allPermissions, p => p.Name == perm.Name);
+            allPermissions.Should().Contain(p => p.Name == perm.Name);
         }
 
         // Test batch updates with concurrency limit
@@ -79,7 +80,7 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
 
         // Verify changes
         var updatedPermissions = await repo.GetAllPermissionsAsync(CancellationToken.None);
-        Assert.True(updatedPermissions.Count >= 100);
+        updatedPermissions.Count.Should().BeGreaterThanOrEqualTo(100);
     }
 
     [Fact]
@@ -153,12 +154,12 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
 
         // Verify all groups exist and have permissions
         var allGroups = await repo.GetAllGroupsAsync(CancellationToken.None);
-        Assert.True(allGroups.Count >= 100);
+        allGroups.Count.Should().BeGreaterThanOrEqualTo(100);
 
         foreach (var group in groups.Take(10)) // Sample check
         {
             var retrievedGroup = await repo.GetGroupAsync(group.Name, CancellationToken.None);
-            Assert.NotNull(retrievedGroup);
+            retrievedGroup.Should().NotBeNull();
         }
     }
 
@@ -266,7 +267,7 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
 
         // Verify users exist
         var allUsers = await repo.GetAllUsersAsync(CancellationToken.None);
-        Assert.True(allUsers.Count >= 1000);
+        allUsers.Count.Should().BeGreaterThanOrEqualTo(1000);
 
         // Test permission calculations for sample users with concurrency limit
         var calculationTasks = users.Take(100).Select(async user =>
@@ -275,7 +276,7 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
             try
             {
                 var permissions = await repo.CalculatePermissionsAsync(user.Email, CancellationToken.None);
-                Assert.NotNull(permissions);
+                permissions.Should().NotBeNull();
                 return permissions;
             }
             finally
@@ -285,7 +286,7 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
         });
 
         var calculatedPermissions = await Task.WhenAll(calculationTasks);
-        Assert.All(calculatedPermissions, perms => Assert.NotNull(perms));
+        calculatedPermissions.Should().AllSatisfy(perms => perms.Should().NotBeNull());
     }
 
     [Fact]
@@ -363,15 +364,15 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
             var calculated = await repo.CalculatePermissionsAsync(email, CancellationToken.None);
             var debug = await repo.CalculatePermissionsDebugAsync(email, CancellationToken.None);
             
-            Assert.NotNull(calculated);
-            Assert.NotNull(debug);
-            Assert.Equal(email, debug.Email);
+            calculated.Should().NotBeNull();
+            debug.Should().NotBeNull();
+            debug.Email.Should().Be(email);
             
             // Verify debug chain makes sense
             foreach (var permDebug in debug.Permissions)
             {
-                Assert.NotEmpty(permDebug.Chain);
-                Assert.True(permDebug.Chain.Count >= 1); // At least default level
+                permDebug.Chain.Should().NotBeEmpty();
+                permDebug.Chain.Count.Should().BeGreaterThanOrEqualTo(1); // At least default level
                 
                 // Verify chain ordering: Default -> Groups -> User
                 var levels = permDebug.Chain.Select(c => c.Level).ToList();
@@ -381,7 +382,7 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
                 {
                     var currentIndex = Array.IndexOf(expectedOrder, levels[i]);
                     var previousIndex = Array.IndexOf(expectedOrder, levels[i-1]);
-                    Assert.True(currentIndex >= previousIndex, $"Chain order violation: {string.Join(" -> ", levels)}");
+                    currentIndex.Should().BeGreaterThanOrEqualTo(previousIndex, $"Chain order violation: {string.Join(" -> ", levels)}");
                 }
             }
             
@@ -391,10 +392,10 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
         var results = await Task.WhenAll(calculationTasks);
 
         // Verify all calculations completed successfully
-        Assert.All(results, r => 
+        results.Should().AllSatisfy(r => 
         {
-            Assert.NotNull(r.Calculated);
-            Assert.NotNull(r.Debug);
+            r.Calculated.Should().NotBeNull();
+            r.Debug.Should().NotBeNull();
         });
 
         // Test concurrent calculations
@@ -480,9 +481,9 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
         var groups = await repo.GetAllGroupsAsync(CancellationToken.None);
         var users = await repo.GetAllUsersAsync(CancellationToken.None);
 
-        Assert.True(permissions.Count >= 50);
-        Assert.True(groups.Count >= 30);
-        Assert.True(users.Count >= 100);
+        permissions.Count.Should().BeGreaterThanOrEqualTo(50);
+        groups.Count.Should().BeGreaterThanOrEqualTo(30);
+        users.Count.Should().BeGreaterThanOrEqualTo(100);
 
         // Concurrent permission assignments with limit
         var assignmentTasks = new List<Task>();
