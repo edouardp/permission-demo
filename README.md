@@ -1,6 +1,7 @@
-# Permissions API
+ # Permissions API
 
-A production-ready REST API for hierarchical permission management with comprehensive audit trails, debugging capabilities, and referential integrity checking.
+A production-ready REST API for hierarchical permission management with comprehensive 
+audit trails, debugging capabilities, and referential integrity checking.
 
 ## Table of Contents
 - [What It's For](#what-its-for)
@@ -18,7 +19,8 @@ A production-ready REST API for hierarchical permission management with comprehe
 
 ## What It's For
 
-This API provides fine-grained access control for applications requiring complex permission hierarchies. Use it when you need:
+This API provides fine-grained access control for applications requiring complex 
+permission hierarchies. Use it when you need:
 
 - **Multi-tenant applications** with role-based access control
 - **Enterprise systems** requiring audit trails and compliance tracking
@@ -63,7 +65,8 @@ curl http://localhost:5000/api/v1/users/user@example.com/permissions
 
 **Resolution Order:** Default → Groups (alphabetically) → User
 
-Later levels override earlier ones. When a user belongs to multiple groups, groups are processed in alphabetical order by name, with later groups overriding earlier ones.
+Later levels override earlier ones. When a user belongs to multiple groups, groups are 
+processed in alphabetical order by name, with later groups overriding earlier ones.
 
 ### Data Model
 
@@ -508,7 +511,7 @@ dotnet test
 dotnet run --project src/PermissionsApi
 
 # Run API with Seq logging
-docker run -d --name seq -e ACCEPT_EULA=Y -p 5341:80 datalust/seq:latest
+docker run --rm -it --name seq -e ACCEPT_EULA=Y -e SEQ_FIRSTRUN_ADMINPASSWORD=pass -p 5341:80 datalust/seq:latest
 SEQ_URL=http://localhost:5341 dotnet run --project src/PermissionsApi
 ```
 
