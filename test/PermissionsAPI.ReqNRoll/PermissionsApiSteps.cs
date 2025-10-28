@@ -3,19 +3,38 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using PermissionsApi.TestSupport;
 using Reqnroll;
-using Xunit;
 
 namespace PermissionsAPI.ReqNRoll;
 
 [UsedImplicitly]
-[Collection("MySQL")]
-public class TestWebApplicationFactory : WebApplicationFactory<PermissionsApi.Program>, IAsyncLifetime
+public class TestWebApplicationFactory : WebApplicationFactory<PermissionsApi.Program>
 {
-    private readonly MySqlTestFixture _fixture;
+    private static readonly MySqlTestFixture _fixture = new();
+    private static bool _initialized;
+    private static readonly SemaphoreSlim _initLock = new(1, 1);
 
-    public TestWebApplicationFactory(MySqlTestFixture fixture)
+    public TestWebApplicationFactory()
     {
-        _fixture = fixture;
+        InitializeFixture().GetAwaiter().GetResult();
+    }
+
+    private static async Task InitializeFixture()
+    {
+        if (_initialized) return;
+        
+        await _initLock.WaitAsync();
+        try
+        {
+            if (!_initialized)
+            {
+                await _fixture.InitializeAsync();
+                _initialized = true;
+            }
+        }
+        finally
+        {
+            _initLock.Release();
+        }
     }
 
     protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
@@ -31,9 +50,6 @@ public class TestWebApplicationFactory : WebApplicationFactory<PermissionsApi.Pr
             });
         });
     }
-
-    public Task InitializeAsync() => Task.CompletedTask;
-    public Task DisposeAsync() => Task.CompletedTask;
 }
 
 [Binding]
