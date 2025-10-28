@@ -12,12 +12,16 @@ public interface IPermissionsRepository
     Task<bool> SetPermissionDefaultAsync(string name, bool isDefault, CancellationToken ct, string? principal = null, string? reason = null);
     
     Task<Group> CreateGroupAsync(string name, CancellationToken ct, string? principal = null, string? reason = null);
+    Task<Group?> GetGroupAsync(string name, CancellationToken ct);
+    Task<List<Group>> GetAllGroupsAsync(CancellationToken ct);
     Task SetGroupPermissionAsync(string groupName, string permission, string access, CancellationToken ct);
     Task SetGroupPermissionsAsync(string groupName, Dictionary<string, string> permissions, CancellationToken ct, string? principal = null, string? reason = null);
     Task RemoveGroupPermissionAsync(string groupName, string permission, CancellationToken ct);
     Task DeleteGroupAsync(string groupName, CancellationToken ct);
     
     Task<User> CreateUserAsync(string email, List<string> groupList, CancellationToken ct, string? principal = null, string? reason = null);
+    Task<User?> GetUserAsync(string email, CancellationToken ct);
+    Task<List<User>> GetAllUsersAsync(CancellationToken ct);
     Task SetUserPermissionAsync(string email, string permission, string access, CancellationToken ct);
     Task SetUserPermissionsAsync(string email, Dictionary<string, string> permissions, CancellationToken ct, string? principal = null, string? reason = null);
     Task RemoveUserPermissionAsync(string email, string permission, CancellationToken ct);

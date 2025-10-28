@@ -91,6 +91,17 @@ public class PermissionsRepository(ILogger<PermissionsRepository> logger, IHisto
         return group;
     }
 
+    public Task<Group?> GetGroupAsync(string name, CancellationToken ct)
+    {
+        groups.TryGetValue(name, out var group);
+        return Task.FromResult(group);
+    }
+
+    public Task<List<Group>> GetAllGroupsAsync(CancellationToken ct)
+    {
+        return Task.FromResult(groups.Values.ToList());
+    }
+
     public Task SetGroupPermissionAsync(string groupName, string permission, string access, CancellationToken ct)
     {
         if (groups.TryGetValue(groupName, out var group))
@@ -129,6 +140,17 @@ public class PermissionsRepository(ILogger<PermissionsRepository> logger, IHisto
         await historyService.RecordChangeAsync("CREATE", "User", email, user, principal, reason);
         logger.LogInformation("Created user {Email} with {GroupCount} groups", email, groupList.Count);
         return user;
+    }
+
+    public Task<User?> GetUserAsync(string email, CancellationToken ct)
+    {
+        users.TryGetValue(email, out var user);
+        return Task.FromResult(user);
+    }
+
+    public Task<List<User>> GetAllUsersAsync(CancellationToken ct)
+    {
+        return Task.FromResult(users.Values.ToList());
     }
 
     public Task SetUserPermissionAsync(string email, string permission, string access, CancellationToken ct)

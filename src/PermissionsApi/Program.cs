@@ -1,3 +1,4 @@
+using PermissionsApi.Database;
 using PermissionsApi.Services;
 using Serilog;
 using Serilog.Core;
@@ -41,14 +42,49 @@ namespace PermissionsApi
                 Log.Information("Starting PermissionsApi");
                 
                 var builder = WebApplication.CreateBuilder(args);
-
                 builder.Host.UseSerilog();
-
                 builder.Services.AddSingleton(TimeProvider.System);
-                builder.Services.AddSingleton<IHistoryService, HistoryService>();
-                builder.Services.AddSingleton<PermissionsRepository>();
-                builder.Services.AddSingleton<IPermissionsRepository>(sp => sp.GetRequiredService<PermissionsRepository>());
-                builder.Services.AddSingleton<IIntegrityChecker, IntegrityChecker>();
+
+                // Configure database implementation
+                var useDatabase = builder.Configuration.GetValue<bool>("UseDatabase", false);
+                var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+                if (useDatabase && !string.IsNullOrEmpty(connectionString))
+                {
+                    // MySQL implementation
+                    Log.Information("Using MySQL database implementation");
+                    
+                    // Run database migrations
+                    var migrationResult = DatabaseMigrator.MigrateDatabase(connectionString);
+                    if (!migrationResult.Successful)
+                    {
+                        var migrationException = new InvalidOperationException($"Database migration failed: {migrationResult.Error}");
+                        Log.Fatal(migrationException, "Database migration failed");
+                        throw migrationException;
+                    }
+                    
+                    // Register MySQL services
+                    builder.Services.AddScoped<IHistoryService>(provider => 
+                        new MySqlHistoryService(connectionString, provider.GetRequiredService<TimeProvider>()));
+                    builder.Services.AddScoped<IPermissionsRepository>(provider => 
+                        new MySqlPermissionsRepository(connectionString, 
+                            provider.GetRequiredService<IHistoryService>(), 
+                            provider.GetRequiredService<ILogger<MySqlPermissionsRepository>>()));
+                    builder.Services.AddScoped<IIntegrityChecker>(provider => 
+                        new MySqlIntegrityChecker(connectionString, 
+                            provider.GetRequiredService<ILogger<MySqlIntegrityChecker>>()));
+                }
+                else
+                {
+                    // In-memory implementation (default)
+                    Log.Information("Using in-memory implementation");
+                    
+                    builder.Services.AddSingleton<IHistoryService, HistoryService>();
+                    builder.Services.AddSingleton<PermissionsRepository>();
+                    builder.Services.AddSingleton<IPermissionsRepository>(sp => sp.GetRequiredService<PermissionsRepository>());
+                    builder.Services.AddSingleton<IIntegrityChecker, IntegrityChecker>();
+                }
+
                 builder.Services.AddControllers();
                 builder.Services.AddEndpointsApiExplorer();
                 builder.Services.AddSwaggerGen(c =>
