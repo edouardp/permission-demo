@@ -22,30 +22,19 @@ public class MySqlPermissionsRepository(string connectionString, IHistoryService
         using var connection = await GetConnectionAsync();
         using var transaction = await connection.BeginTransactionAsync(ct);
         
-        try
-        {
-            const string sql = """
-                INSERT INTO permissions (name, description, is_default) 
-                VALUES (@Name, @Description, @IsDefault)
-                """;
-            
-            await connection.ExecuteAsync(sql, new { Name = name, Description = description, IsDefault = isDefault }, transaction);
-            await transaction.CommitAsync(ct);
-            
-            var permission = new Permission { Name = name, Description = description, IsDefault = isDefault };
-            await historyService.RecordChangeAsync("CREATE", "Permission", name, permission, principal, reason);
-            
-            logger.LogInformation("Created permission {PermissionName} (IsDefault: {IsDefault})", name, isDefault);
-            return permission;
-        }
-        catch
-        {
-            if (transaction.Connection != null)
-            {
-                await transaction.RollbackAsync(ct);
-            }
-            throw;
-        }
+        const string sql = """
+            INSERT INTO permissions (name, description, is_default) 
+            VALUES (@Name, @Description, @IsDefault)
+            """;
+        
+        await connection.ExecuteAsync(sql, new { Name = name, Description = description, IsDefault = isDefault }, transaction);
+        await transaction.CommitAsync(ct);
+        
+        var permission = new Permission { Name = name, Description = description, IsDefault = isDefault };
+        await historyService.RecordChangeAsync("CREATE", "Permission", name, permission, principal, reason);
+        
+        logger.LogInformation("Created permission {PermissionName} (IsDefault: {IsDefault})", name, isDefault);
+        return permission;
     }
 
     public async Task<Permission?> GetPermissionAsync(string name, CancellationToken ct)
@@ -70,32 +59,20 @@ public class MySqlPermissionsRepository(string connectionString, IHistoryService
         using var connection = await GetConnectionAsync();
         using var transaction = await connection.BeginTransactionAsync(ct);
         
-        try
+        const string sql = "UPDATE permissions SET description = @Description WHERE name = @Name";
+        var rowsAffected = await connection.ExecuteAsync(sql, new { Name = name, Description = description }, transaction);
+        
+        if (rowsAffected > 0)
         {
-            const string sql = "UPDATE permissions SET description = @Description WHERE name = @Name";
-            var rowsAffected = await connection.ExecuteAsync(sql, new { Name = name, Description = description }, transaction);
+            // Get updated permission in same transaction
+            const string selectSql = "SELECT name, description, is_default as IsDefault FROM permissions WHERE name = @Name";
+            var permission = await connection.QuerySingleAsync<Permission>(selectSql, new { Name = name }, transaction);
             
-            if (rowsAffected > 0)
-            {
-                // Get updated permission in same transaction
-                const string selectSql = "SELECT name, description, is_default as IsDefault FROM permissions WHERE name = @Name";
-                var permission = await connection.QuerySingleAsync<Permission>(selectSql, new { Name = name }, transaction);
-                
-                await transaction.CommitAsync(ct);
-                await historyService.RecordChangeAsync("UPDATE", "Permission", name, permission, principal, reason);
-            }
-            else
-            {
-                await transaction.RollbackAsync(ct);
-            }
-            
-            return rowsAffected > 0;
+            await transaction.CommitAsync(ct);
+            await historyService.RecordChangeAsync("UPDATE", "Permission", name, permission, principal, reason);
         }
-        catch
-        {
-            await transaction.RollbackAsync(ct);
-            throw;
-        }
+        
+        return rowsAffected > 0;
     }
 
     public async Task<bool> DeletePermissionAsync(string name, CancellationToken ct, string? principal = null, string? reason = null)
@@ -103,30 +80,22 @@ public class MySqlPermissionsRepository(string connectionString, IHistoryService
         using var connection = await GetConnectionAsync();
         using var transaction = await connection.BeginTransactionAsync(ct);
         
-        try
-        {
             // Get permission before deletion for history
-            const string selectSql = "SELECT name, description, is_default as IsDefault FROM permissions WHERE name = @Name";
-            var permission = await connection.QuerySingleOrDefaultAsync<Permission>(selectSql, new { Name = name }, transaction);
-            
-            const string deleteSql = "DELETE FROM permissions WHERE name = @Name";
-            var rowsAffected = await connection.ExecuteAsync(deleteSql, new { Name = name }, transaction);
-            
-            await transaction.CommitAsync(ct);
-            
-            if (rowsAffected > 0)
-            {
-                IEntity entity = permission ?? (IEntity)new EmptyEntity();
-                await historyService.RecordChangeAsync("DELETE", "Permission", name, entity, principal, reason);
-            }
-            
-            return rowsAffected > 0;
-        }
-        catch
-        {
-            await transaction.RollbackAsync(ct);
-            throw;
-        }
+    const string selectSql = "SELECT name, description, is_default as IsDefault FROM permissions WHERE name = @Name";
+    var permission = await connection.QuerySingleOrDefaultAsync<Permission>(selectSql, new { Name = name }, transaction);
+
+    const string deleteSql = "DELETE FROM permissions WHERE name = @Name";
+    var rowsAffected = await connection.ExecuteAsync(deleteSql, new { Name = name }, transaction);
+
+    await transaction.CommitAsync(ct);
+
+    if (rowsAffected > 0)
+    {
+        IEntity entity = permission ?? (IEntity)new EmptyEntity();
+        await historyService.RecordChangeAsync("DELETE", "Permission", name, entity, principal, reason);
+    }
+
+    return rowsAffected > 0;
     }
 
     public async Task<bool> SetPermissionDefaultAsync(string name, bool isDefault, CancellationToken ct, string? principal = null, string? reason = null)
@@ -134,32 +103,20 @@ public class MySqlPermissionsRepository(string connectionString, IHistoryService
         using var connection = await GetConnectionAsync();
         using var transaction = await connection.BeginTransactionAsync(ct);
         
-        try
-        {
-            const string sql = "UPDATE permissions SET is_default = @IsDefault WHERE name = @Name";
-            var rowsAffected = await connection.ExecuteAsync(sql, new { Name = name, IsDefault = isDefault }, transaction);
-            
-            if (rowsAffected > 0)
-            {
-                // Get updated permission in same transaction
-                const string selectSql = "SELECT name, description, is_default as IsDefault FROM permissions WHERE name = @Name";
-                var permission = await connection.QuerySingleAsync<Permission>(selectSql, new { Name = name }, transaction);
-                
-                await transaction.CommitAsync(ct);
-                await historyService.RecordChangeAsync("UPDATE", "Permission", name, permission, principal, reason);
-            }
-            else
-            {
-                await transaction.RollbackAsync(ct);
-            }
-            
-            return rowsAffected > 0;
-        }
-        catch
-        {
-            await transaction.RollbackAsync(ct);
-            throw;
-        }
+        const string sql = "UPDATE permissions SET is_default = @IsDefault WHERE name = @Name";
+        var rowsAffected = await connection.ExecuteAsync(sql, new { Name = name, IsDefault = isDefault }, transaction);
+
+        if (rowsAffected == 0)
+            return false;
+
+        // Get updated permission in same transaction
+        const string selectSql = "SELECT name, description, is_default as IsDefault FROM permissions WHERE name = @Name";
+        var permission = await connection.QuerySingleAsync<Permission>(selectSql, new { Name = name }, transaction);
+
+        await transaction.CommitAsync(ct);
+        await historyService.RecordChangeAsync("UPDATE", "Permission", name, permission, principal, reason);
+
+        return true;
     }
 
     #endregion
@@ -171,24 +128,16 @@ public class MySqlPermissionsRepository(string connectionString, IHistoryService
         using var connection = await GetConnectionAsync();
         using var transaction = await connection.BeginTransactionAsync(ct);
         
-        try
-        {
-            const string sql = "INSERT INTO `groups` (name) VALUES (@Name)";
-            await connection.ExecuteAsync(sql, new { Name = name }, transaction);
-            
-            await transaction.CommitAsync(ct);
-            
-            var group = new Group { Name = name };
-            await historyService.RecordChangeAsync("CREATE", "Group", name, group, principal, reason);
-            
-            logger.LogInformation("Created group {GroupName}", name);
-            return group;
-        }
-        catch
-        {
-            await transaction.RollbackAsync(ct);
-            throw;
-        }
+        const string sql = "INSERT INTO `groups` (name) VALUES (@Name)";
+        await connection.ExecuteAsync(sql, new { Name = name }, transaction);
+        
+        await transaction.CommitAsync(ct);
+        
+        var group = new Group { Name = name };
+        await historyService.RecordChangeAsync("CREATE", "Group", name, group, principal, reason);
+        
+        logger.LogInformation("Created group {GroupName}", name);
+        return group;
     }
 
     public async Task SetGroupPermissionAsync(string groupName, string permission, string access, CancellationToken ct)
@@ -196,24 +145,16 @@ public class MySqlPermissionsRepository(string connectionString, IHistoryService
         using var connection = await GetConnectionAsync();
         using var transaction = await connection.BeginTransactionAsync(ct);
         
-        try
-        {
-            const string sql = """
-                INSERT INTO group_permissions (group_name, permission_name, access_type) 
-                VALUES (@GroupName, @Permission, @Access)
-                ON DUPLICATE KEY UPDATE access_type = @Access
-                """;
-            
-            await connection.ExecuteAsync(sql, new { GroupName = groupName, Permission = permission, Access = access }, transaction);
-            await transaction.CommitAsync(ct);
-            
-            logger.LogInformation("Set group {GroupName} permission {Permission} to {Access}", groupName, permission, access);
-        }
-        catch
-        {
-            await transaction.RollbackAsync(ct);
-            throw;
-        }
+        const string sql = """
+            INSERT INTO group_permissions (group_name, permission_name, access_type) 
+            VALUES (@GroupName, @Permission, @Access)
+            ON DUPLICATE KEY UPDATE access_type = @Access
+            """;
+        
+        await connection.ExecuteAsync(sql, new { GroupName = groupName, Permission = permission, Access = access }, transaction);
+        await transaction.CommitAsync(ct);
+        
+        logger.LogInformation("Set group {GroupName} permission {Permission} to {Access}", groupName, permission, access);
     }
 
     public async Task SetGroupPermissionsAsync(string groupName, Dictionary<string, string> permissions, CancellationToken ct, string? principal = null, string? reason = null)
@@ -221,65 +162,57 @@ public class MySqlPermissionsRepository(string connectionString, IHistoryService
         using var connection = await GetConnectionAsync();
         using var transaction = await connection.BeginTransactionAsync(ct);
         
-        try
-        {
             // Clear existing permissions
-            const string deleteSql = "DELETE FROM group_permissions WHERE group_name = @GroupName";
-            await connection.ExecuteAsync(deleteSql, new { GroupName = groupName }, transaction);
-            
-            // Insert new permissions
-            if (permissions.Count > 0)
-            {
-                const string insertSql = """
-                    INSERT INTO group_permissions (group_name, permission_name, access_type, assigned_by) 
-                    VALUES (@GroupName, @Permission, @Access, @Principal)
-                    """;
-                
-                var parameters = permissions.Select(p => new 
-                { 
-                    GroupName = groupName, 
-                    Permission = p.Key, 
-                    Access = p.Value,
-                    Principal = principal
-                });
-                
-                await connection.ExecuteAsync(insertSql, parameters, transaction);
-            }
-            
-            // Get updated group in same transaction
-            const string selectSql = """
-                SELECT g.name, gp.permission_name, gp.access_type
-                FROM `groups` g
-                LEFT JOIN group_permissions gp ON g.name = gp.group_name
-                WHERE g.name = @GroupName
-                """;
-            
-            var results = await connection.QueryAsync<dynamic>(selectSql, new { GroupName = groupName }, transaction);
-            
-            await transaction.CommitAsync(ct);
-            
-            if (results.Any())
-            {
-                var groupPermissions = new Dictionary<string, string>();
-                foreach (var row in results)
-                {
-                    if (row.permission_name != null)
-                    {
-                        groupPermissions[(string)row.permission_name] = (string)row.access_type;
-                    }
-                }
-                
-                var group = new Group { Name = groupName, Permissions = groupPermissions };
-                await historyService.RecordChangeAsync("UPDATE", "Group", groupName, group, principal, reason);
-            }
-            
-            logger.LogInformation("Set group {GroupName} permissions with {Count} permissions", groupName, permissions.Count);
-        }
-        catch
+    const string deleteSql = "DELETE FROM group_permissions WHERE group_name = @GroupName";
+    await connection.ExecuteAsync(deleteSql, new { GroupName = groupName }, transaction);
+
+    // Insert new permissions
+    if (permissions.Count > 0)
+    {
+        const string insertSql = """
+            INSERT INTO group_permissions (group_name, permission_name, access_type, assigned_by) 
+            VALUES (@GroupName, @Permission, @Access, @Principal)
+            """;
+
+        var parameters = permissions.Select(p => new 
+        { 
+            GroupName = groupName, 
+            Permission = p.Key, 
+            Access = p.Value,
+            Principal = principal
+        });
+
+        await connection.ExecuteAsync(insertSql, parameters, transaction);
+    }
+
+    // Get updated group in same transaction
+    const string selectSql = """
+        SELECT g.name, gp.permission_name, gp.access_type
+        FROM `groups` g
+        LEFT JOIN group_permissions gp ON g.name = gp.group_name
+        WHERE g.name = @GroupName
+        """;
+
+    var results = await connection.QueryAsync<dynamic>(selectSql, new { GroupName = groupName }, transaction);
+
+    await transaction.CommitAsync(ct);
+
+    if (results.Any())
+    {
+        var groupPermissions = new Dictionary<string, string>();
+        foreach (var row in results)
         {
-            await transaction.RollbackAsync(ct);
-            throw;
+            if (row.permission_name != null)
+            {
+                groupPermissions[(string)row.permission_name] = (string)row.access_type;
+            }
         }
+
+        var group = new Group { Name = groupName, Permissions = groupPermissions };
+        await historyService.RecordChangeAsync("UPDATE", "Group", groupName, group, principal, reason);
+    }
+
+    logger.LogInformation("Set group {GroupName} permissions with {Count} permissions", groupName, permissions.Count);
     }
 
     public async Task RemoveGroupPermissionAsync(string groupName, string permission, CancellationToken ct)
@@ -287,19 +220,11 @@ public class MySqlPermissionsRepository(string connectionString, IHistoryService
         using var connection = await GetConnectionAsync();
         using var transaction = await connection.BeginTransactionAsync(ct);
         
-        try
-        {
             const string sql = "DELETE FROM group_permissions WHERE group_name = @GroupName AND permission_name = @Permission";
-            await connection.ExecuteAsync(sql, new { GroupName = groupName, Permission = permission }, transaction);
-            await transaction.CommitAsync(ct);
-            
-            logger.LogInformation("Removed group {GroupName} permission {Permission}", groupName, permission);
-        }
-        catch
-        {
-            await transaction.RollbackAsync(ct);
-            throw;
-        }
+    await connection.ExecuteAsync(sql, new { GroupName = groupName, Permission = permission }, transaction);
+    await transaction.CommitAsync(ct);
+
+    logger.LogInformation("Removed group {GroupName} permission {Permission}", groupName, permission);
     }
 
     public async Task DeleteGroupAsync(string groupName, CancellationToken ct)
@@ -307,49 +232,41 @@ public class MySqlPermissionsRepository(string connectionString, IHistoryService
         using var connection = await GetConnectionAsync();
         using var transaction = await connection.BeginTransactionAsync(ct);
         
-        try
-        {
             // Get group before deletion for history
-            const string selectSql = """
-                SELECT g.name, gp.permission_name, gp.access_type
-                FROM `groups` g
-                LEFT JOIN group_permissions gp ON g.name = gp.group_name
-                WHERE g.name = @GroupName
-                """;
-            
-            var results = await connection.QueryAsync<dynamic>(selectSql, new { GroupName = groupName }, transaction);
-            
-            const string deleteSql = "DELETE FROM `groups` WHERE name = @Name";
-            var rowsAffected = await connection.ExecuteAsync(deleteSql, new { Name = groupName }, transaction);
-            
-            await transaction.CommitAsync(ct);
-            
-            if (rowsAffected > 0)
-            {
-                object groupEntity = new EmptyEntity();
-                
-                if (results.Any())
-                {
-                    var permissions = new Dictionary<string, string>();
-                    foreach (var row in results)
-                    {
-                        if (row.permission_name != null)
-                        {
-                            permissions[(string)row.permission_name] = (string)row.access_type;
-                        }
-                    }
-                    groupEntity = new Group { Name = groupName, Permissions = permissions };
-                }
-                
-                await historyService.RecordChangeAsync("DELETE", "Group", groupName, (IEntity)groupEntity);
-                logger.LogInformation("Deleted group {GroupName}", groupName);
-            }
-        }
-        catch
+    const string selectSql = """
+        SELECT g.name, gp.permission_name, gp.access_type
+        FROM `groups` g
+        LEFT JOIN group_permissions gp ON g.name = gp.group_name
+        WHERE g.name = @GroupName
+        """;
+
+    var results = await connection.QueryAsync<dynamic>(selectSql, new { GroupName = groupName }, transaction);
+
+    const string deleteSql = "DELETE FROM `groups` WHERE name = @Name";
+    var rowsAffected = await connection.ExecuteAsync(deleteSql, new { Name = groupName }, transaction);
+
+    await transaction.CommitAsync(ct);
+
+    if (rowsAffected > 0)
+    {
+        object groupEntity = new EmptyEntity();
+
+        if (results.Any())
         {
-            await transaction.RollbackAsync(ct);
-            throw;
+            var permissions = new Dictionary<string, string>();
+            foreach (var row in results)
+            {
+                if (row.permission_name != null)
+                {
+                    permissions[(string)row.permission_name] = (string)row.access_type;
+                }
+            }
+            groupEntity = new Group { Name = groupName, Permissions = permissions };
         }
+
+        await historyService.RecordChangeAsync("DELETE", "Group", groupName, (IEntity)groupEntity);
+        logger.LogInformation("Deleted group {GroupName}", groupName);
+    }
     }
 
     public async Task<Group?> GetGroupAsync(string name, CancellationToken ct)
@@ -426,37 +343,29 @@ public class MySqlPermissionsRepository(string connectionString, IHistoryService
         using var connection = await GetConnectionAsync();
         using var transaction = await connection.BeginTransactionAsync(ct);
         
-        try
-        {
             // Create user
-            const string userSql = "INSERT INTO users (email) VALUES (@Email)";
-            await connection.ExecuteAsync(userSql, new { Email = email }, transaction);
-            
-            // Add group memberships
-            if (groupList.Count > 0)
-            {
-                const string membershipSql = """
-                    INSERT INTO user_group_memberships (user_email, group_name, assigned_by) 
-                    VALUES (@Email, @GroupName, @Principal)
-                    """;
-                
-                var parameters = groupList.Select(g => new { Email = email, GroupName = g, Principal = principal });
-                await connection.ExecuteAsync(membershipSql, parameters, transaction);
-            }
-            
-            await transaction.CommitAsync(ct);
-            
-            var user = new User { Email = email, Groups = groupList };
-            await historyService.RecordChangeAsync("CREATE", "User", email, user, principal, reason);
-            
-            logger.LogInformation("Created user {Email} with {GroupCount} groups", email, groupList.Count);
-            return user;
-        }
-        catch
-        {
-            await transaction.RollbackAsync(ct);
-            throw;
-        }
+    const string userSql = "INSERT INTO users (email) VALUES (@Email)";
+    await connection.ExecuteAsync(userSql, new { Email = email }, transaction);
+
+    // Add group memberships
+    if (groupList.Count > 0)
+    {
+        const string membershipSql = """
+            INSERT INTO user_group_memberships (user_email, group_name, assigned_by) 
+            VALUES (@Email, @GroupName, @Principal)
+            """;
+
+        var parameters = groupList.Select(g => new { Email = email, GroupName = g, Principal = principal });
+        await connection.ExecuteAsync(membershipSql, parameters, transaction);
+    }
+
+    await transaction.CommitAsync(ct);
+
+    var user = new User { Email = email, Groups = groupList };
+    await historyService.RecordChangeAsync("CREATE", "User", email, user, principal, reason);
+
+    logger.LogInformation("Created user {Email} with {GroupCount} groups", email, groupList.Count);
+    return user;
     }
 
     public async Task SetUserPermissionAsync(string email, string permission, string access, CancellationToken ct)
@@ -464,24 +373,16 @@ public class MySqlPermissionsRepository(string connectionString, IHistoryService
         using var connection = await GetConnectionAsync();
         using var transaction = await connection.BeginTransactionAsync(ct);
         
-        try
-        {
             const string sql = """
-                INSERT INTO user_permissions (user_email, permission_name, access_type) 
-                VALUES (@Email, @Permission, @Access)
-                ON DUPLICATE KEY UPDATE access_type = @Access
-                """;
-            
-            await connection.ExecuteAsync(sql, new { Email = email, Permission = permission, Access = access }, transaction);
-            await transaction.CommitAsync(ct);
-            
-            logger.LogInformation("Set user {Email} permission {Permission} to {Access}", email, permission, access);
-        }
-        catch
-        {
-            await transaction.RollbackAsync(ct);
-            throw;
-        }
+        INSERT INTO user_permissions (user_email, permission_name, access_type) 
+        VALUES (@Email, @Permission, @Access)
+        ON DUPLICATE KEY UPDATE access_type = @Access
+        """;
+
+    await connection.ExecuteAsync(sql, new { Email = email, Permission = permission, Access = access }, transaction);
+    await transaction.CommitAsync(ct);
+
+    logger.LogInformation("Set user {Email} permission {Permission} to {Access}", email, permission, access);
     }
 
     public async Task SetUserPermissionsAsync(string email, Dictionary<string, string> permissions, CancellationToken ct, string? principal = null, string? reason = null)
@@ -489,75 +390,67 @@ public class MySqlPermissionsRepository(string connectionString, IHistoryService
         using var connection = await GetConnectionAsync();
         using var transaction = await connection.BeginTransactionAsync(ct);
         
-        try
-        {
             // Clear existing permissions
-            const string deleteSql = "DELETE FROM user_permissions WHERE user_email = @Email";
-            await connection.ExecuteAsync(deleteSql, new { Email = email }, transaction);
-            
-            // Insert new permissions
-            if (permissions.Count > 0)
-            {
-                const string insertSql = """
-                    INSERT INTO user_permissions (user_email, permission_name, access_type, assigned_by) 
-                    VALUES (@Email, @Permission, @Access, @Principal)
-                    """;
-                
-                var parameters = permissions.Select(p => new 
-                { 
-                    Email = email, 
-                    Permission = p.Key, 
-                    Access = p.Value,
-                    Principal = principal
-                });
-                
-                await connection.ExecuteAsync(insertSql, parameters, transaction);
-            }
-            
-            // Get updated user in same transaction
-            const string selectSql = """
-                SELECT u.email,
-                       ugm.group_name,
-                       up.permission_name,
-                       up.access_type
-                FROM users u
-                LEFT JOIN user_group_memberships ugm ON u.email = ugm.user_email
-                LEFT JOIN user_permissions up ON u.email = up.user_email
-                WHERE u.email = @Email
-                """;
-            
-            var results = await connection.QueryAsync<dynamic>(selectSql, new { Email = email }, transaction);
-            
-            await transaction.CommitAsync(ct);
-            
-            if (results.Any())
-            {
-                var groups = new List<string>();
-                var userPermissions = new Dictionary<string, string>();
-                
-                foreach (var row in results)
-                {
-                    if (row.group_name != null && !groups.Contains((string)row.group_name))
-                    {
-                        groups.Add((string)row.group_name);
-                    }
-                    if (row.permission_name != null)
-                    {
-                        userPermissions[(string)row.permission_name] = (string)row.access_type;
-                    }
-                }
-                
-                var user = new User { Email = email, Groups = groups, Permissions = userPermissions };
-                await historyService.RecordChangeAsync("UPDATE", "User", email, user, principal, reason);
-            }
-            
-            logger.LogInformation("Set user {Email} permissions with {Count} permissions", email, permissions.Count);
-        }
-        catch
+    const string deleteSql = "DELETE FROM user_permissions WHERE user_email = @Email";
+    await connection.ExecuteAsync(deleteSql, new { Email = email }, transaction);
+
+    // Insert new permissions
+    if (permissions.Count > 0)
+    {
+        const string insertSql = """
+            INSERT INTO user_permissions (user_email, permission_name, access_type, assigned_by) 
+            VALUES (@Email, @Permission, @Access, @Principal)
+            """;
+
+        var parameters = permissions.Select(p => new 
+        { 
+            Email = email, 
+            Permission = p.Key, 
+            Access = p.Value,
+            Principal = principal
+        });
+
+        await connection.ExecuteAsync(insertSql, parameters, transaction);
+    }
+
+    // Get updated user in same transaction
+    const string selectSql = """
+        SELECT u.email,
+               ugm.group_name,
+               up.permission_name,
+               up.access_type
+        FROM users u
+        LEFT JOIN user_group_memberships ugm ON u.email = ugm.user_email
+        LEFT JOIN user_permissions up ON u.email = up.user_email
+        WHERE u.email = @Email
+        """;
+
+    var results = await connection.QueryAsync<dynamic>(selectSql, new { Email = email }, transaction);
+
+    await transaction.CommitAsync(ct);
+
+    if (results.Any())
+    {
+        var groups = new List<string>();
+        var userPermissions = new Dictionary<string, string>();
+
+        foreach (var row in results)
         {
-            await transaction.RollbackAsync(ct);
-            throw;
+            if (row.group_name != null && !groups.Contains((string)row.group_name))
+            {
+                groups.Add((string)row.group_name);
+            }
+            if (row.permission_name != null)
+            {
+                userPermissions[(string)row.permission_name] = (string)row.access_type;
+            }
         }
+
+        var user = new User { Email = email, Groups = groups, Permissions = userPermissions };
+        await historyService.RecordChangeAsync("UPDATE", "User", email, user, principal, reason);
+    }
+
+    logger.LogInformation("Set user {Email} permissions with {Count} permissions", email, permissions.Count);
     }
 
     public async Task RemoveUserPermissionAsync(string email, string permission, CancellationToken ct)
@@ -565,19 +458,11 @@ public class MySqlPermissionsRepository(string connectionString, IHistoryService
         using var connection = await GetConnectionAsync();
         using var transaction = await connection.BeginTransactionAsync(ct);
         
-        try
-        {
             const string sql = "DELETE FROM user_permissions WHERE user_email = @Email AND permission_name = @Permission";
-            await connection.ExecuteAsync(sql, new { Email = email, Permission = permission }, transaction);
-            await transaction.CommitAsync(ct);
-            
-            logger.LogInformation("Removed user {Email} permission {Permission}", email, permission);
-        }
-        catch
-        {
-            await transaction.RollbackAsync(ct);
-            throw;
-        }
+    await connection.ExecuteAsync(sql, new { Email = email, Permission = permission }, transaction);
+    await transaction.CommitAsync(ct);
+
+    logger.LogInformation("Removed user {Email} permission {Permission}", email, permission);
     }
 
     public async Task DeleteUserAsync(string email, CancellationToken ct)
@@ -585,60 +470,52 @@ public class MySqlPermissionsRepository(string connectionString, IHistoryService
         using var connection = await GetConnectionAsync();
         using var transaction = await connection.BeginTransactionAsync(ct);
         
-        try
-        {
             // Get user before deletion for history
-            const string selectSql = """
-                SELECT u.email,
-                       ugm.group_name,
-                       up.permission_name,
-                       up.access_type
-                FROM users u
-                LEFT JOIN user_group_memberships ugm ON u.email = ugm.user_email
-                LEFT JOIN user_permissions up ON u.email = up.user_email
-                WHERE u.email = @Email
-                """;
-            
-            var results = await connection.QueryAsync<dynamic>(selectSql, new { Email = email }, transaction);
-            
-            const string deleteSql = "DELETE FROM users WHERE email = @Email";
-            var rowsAffected = await connection.ExecuteAsync(deleteSql, new { Email = email }, transaction);
-            
-            await transaction.CommitAsync(ct);
-            
-            if (rowsAffected > 0)
-            {
-                object userEntity = new EmptyEntity();
-                
-                if (results.Any())
-                {
-                    var groups = new List<string>();
-                    var userPermissions = new Dictionary<string, string>();
-                    
-                    foreach (var row in results)
-                    {
-                        if (row.group_name != null && !groups.Contains((string)row.group_name))
-                        {
-                            groups.Add((string)row.group_name);
-                        }
-                        if (row.permission_name != null)
-                        {
-                            userPermissions[(string)row.permission_name] = (string)row.access_type;
-                        }
-                    }
-                    
-                    userEntity = new User { Email = email, Groups = groups, Permissions = userPermissions };
-                }
-                
-                await historyService.RecordChangeAsync("DELETE", "User", email, (IEntity)userEntity);
-                logger.LogInformation("Deleted user {Email}", email);
-            }
-        }
-        catch
+    const string selectSql = """
+        SELECT u.email,
+               ugm.group_name,
+               up.permission_name,
+               up.access_type
+        FROM users u
+        LEFT JOIN user_group_memberships ugm ON u.email = ugm.user_email
+        LEFT JOIN user_permissions up ON u.email = up.user_email
+        WHERE u.email = @Email
+        """;
+
+    var results = await connection.QueryAsync<dynamic>(selectSql, new { Email = email }, transaction);
+
+    const string deleteSql = "DELETE FROM users WHERE email = @Email";
+    var rowsAffected = await connection.ExecuteAsync(deleteSql, new { Email = email }, transaction);
+
+    await transaction.CommitAsync(ct);
+
+    if (rowsAffected > 0)
+    {
+        object userEntity = new EmptyEntity();
+
+        if (results.Any())
         {
-            await transaction.RollbackAsync(ct);
-            throw;
+            var groups = new List<string>();
+            var userPermissions = new Dictionary<string, string>();
+
+            foreach (var row in results)
+            {
+                if (row.group_name != null && !groups.Contains((string)row.group_name))
+                {
+                    groups.Add((string)row.group_name);
+                }
+                if (row.permission_name != null)
+                {
+                    userPermissions[(string)row.permission_name] = (string)row.access_type;
+                }
+            }
+
+            userEntity = new User { Email = email, Groups = groups, Permissions = userPermissions };
         }
+
+        await historyService.RecordChangeAsync("DELETE", "User", email, (IEntity)userEntity);
+        logger.LogInformation("Deleted user {Email}", email);
+    }
     }
 
     public async Task<User?> GetUserAsync(string email, CancellationToken ct)
