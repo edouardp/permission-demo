@@ -1,6 +1,5 @@
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.Configuration;
 using Reqnroll;
 
 namespace PermissionsAPI.ReqNRoll;
@@ -11,15 +10,6 @@ public class TestWebApplicationFactory : WebApplicationFactory<PermissionsApi.Pr
     protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
     {
         PermissionsApi.Program.LevelSwitch.MinimumLevel = Serilog.Events.LogEventLevel.Fatal;
-        
-        // Force in-memory implementation for tests
-        builder.ConfigureAppConfiguration((context, config) =>
-        {
-            config.AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["UseDatabase"] = "false"
-            });
-        });
     }
 }
 
