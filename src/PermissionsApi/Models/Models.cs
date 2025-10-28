@@ -37,13 +37,7 @@ public record Permission : IEntity
 public record Group : IEntity
 {
     /// <summary>
-    /// Unique group identifier
-    /// </summary>
-    /// <example>abc123</example>
-    public required string Id { get; init; }
-    
-    /// <summary>
-    /// Group name
+    /// Group name (also serves as unique identifier)
     /// </summary>
     /// <example>editors</example>
     public required string Name { get; init; }
@@ -53,6 +47,11 @@ public record Group : IEntity
     /// </summary>
     /// <example>{"write": "ALLOW", "delete": "DENY"}</example>
     public Dictionary<string, string> Permissions { get; init; } = new();
+    
+    /// <summary>
+    /// Entity ID (same as Name for groups)
+    /// </summary>
+    public string Id => Name;
 }
 
 /// <summary>
@@ -67,9 +66,9 @@ public record User : IEntity
     public required string Email { get; init; }
     
     /// <summary>
-    /// List of group IDs this user belongs to
+    /// List of group names this user belongs to
     /// </summary>
-    /// <example>["abc123", "def456"]</example>
+    /// <example>["editors", "reviewers"]</example>
     public List<string> Groups { get; init; } = [];
     
     /// <summary>
@@ -138,9 +137,9 @@ public record CreateUserRequest : AuditableRequest
     public required string Email { get; init; }
     
     /// <summary>
-    /// List of group IDs to add the user to
+    /// List of group names to add the user to
     /// </summary>
-    /// <example>["abc123"]</example>
+    /// <example>["editors"]</example>
     public List<string> Groups { get; init; } = [];
 }
 

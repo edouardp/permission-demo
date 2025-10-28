@@ -84,40 +84,40 @@ public class PermissionsRepository(ILogger<PermissionsRepository> logger, IHisto
 
     public async Task<Group> CreateGroupAsync(string name, CancellationToken ct, string? principal = null, string? reason = null)
     {
-        var group = new Group { Id = Guid.NewGuid().ToString(), Name = name };
-        groups[group.Id] = group;
-        await historyService.RecordChangeAsync("CREATE", "Group", group.Id, group, principal, reason);
-        logger.LogInformation("Created group {GroupId} with name {GroupName}", group.Id, name);
+        var group = new Group { Name = name };
+        groups[name] = group;
+        await historyService.RecordChangeAsync("CREATE", "Group", name, group, principal, reason);
+        logger.LogInformation("Created group {GroupName}", name);
         return group;
     }
 
-    public Task SetGroupPermissionAsync(string groupId, string permission, string access, CancellationToken ct)
+    public Task SetGroupPermissionAsync(string groupName, string permission, string access, CancellationToken ct)
     {
-        if (groups.TryGetValue(groupId, out var group))
+        if (groups.TryGetValue(groupName, out var group))
         {
             group.Permissions[permission] = access;
-            logger.LogInformation("Set group {GroupId} permission {Permission} to {Access}", groupId, permission, access);
+            logger.LogInformation("Set group {GroupName} permission {Permission} to {Access}", groupName, permission, access);
         }
         return Task.CompletedTask;
     }
 
-    public async Task SetGroupPermissionsAsync(string groupId, Dictionary<string, string> permissions, CancellationToken ct, string? principal = null, string? reason = null)
+    public async Task SetGroupPermissionsAsync(string groupName, Dictionary<string, string> permissions, CancellationToken ct, string? principal = null, string? reason = null)
     {
-        if (groups.TryGetValue(groupId, out var group))
+        if (groups.TryGetValue(groupName, out var group))
         {
             var updatedGroup = group with { Permissions = new Dictionary<string, string>(permissions) };
-            groups[groupId] = updatedGroup;
-            await historyService.RecordChangeAsync("UPDATE", "Group", groupId, updatedGroup, principal, reason);
-            logger.LogInformation("Set group {GroupId} permissions with {Count} permissions", groupId, permissions.Count);
+            groups[groupName] = updatedGroup;
+            await historyService.RecordChangeAsync("UPDATE", "Group", groupName, updatedGroup, principal, reason);
+            logger.LogInformation("Set group {GroupName} permissions with {Count} permissions", groupName, permissions.Count);
         }
     }
 
-    public Task RemoveGroupPermissionAsync(string groupId, string permission, CancellationToken ct)
+    public Task RemoveGroupPermissionAsync(string groupName, string permission, CancellationToken ct)
     {
-        if (groups.TryGetValue(groupId, out var group))
+        if (groups.TryGetValue(groupName, out var group))
         {
             group.Permissions.Remove(permission);
-            logger.LogInformation("Removed group {GroupId} permission {Permission}", groupId, permission);
+            logger.LogInformation("Removed group {GroupName} permission {Permission}", groupName, permission);
         }
         return Task.CompletedTask;
     }
@@ -300,11 +300,11 @@ public class PermissionsRepository(ILogger<PermissionsRepository> logger, IHisto
         return Task.CompletedTask;
     }
 
-    public Task DeleteGroupAsync(string groupId, CancellationToken ct)
+    public Task DeleteGroupAsync(string groupName, CancellationToken ct)
     {
-        var result = groups.TryRemove(groupId, out _);
+        var result = groups.TryRemove(groupName, out _);
         if (result)
-            logger.LogInformation("Deleted group {GroupId}", groupId);
+            logger.LogInformation("Deleted group {GroupName}", groupName);
         return Task.CompletedTask;
     }
 }

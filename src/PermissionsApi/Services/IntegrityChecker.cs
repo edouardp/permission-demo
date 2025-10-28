@@ -7,9 +7,9 @@ namespace PermissionsApi.Services;
 public interface IIntegrityChecker
 {
     Task<IntegrityCheckResult> CanDeletePermissionAsync(string permissionName);
-    Task<IntegrityCheckResult> CanDeleteGroupAsync(string groupId);
+    Task<IntegrityCheckResult> CanDeleteGroupAsync(string groupName);
     Task<PermissionDependencies> GetPermissionDependenciesAsync(string permissionName);
-    Task<GroupDependencies> GetGroupDependenciesAsync(string groupId);
+    Task<GroupDependencies> GetGroupDependenciesAsync(string groupName);
 }
 
 public record IntegrityCheckResult(bool IsValid, string? Reason = null);
@@ -55,12 +55,12 @@ public class IntegrityChecker(PermissionsRepository repository, ILogger<Integrit
         }
     }
 
-    public Task<IntegrityCheckResult> CanDeleteGroupAsync(string groupId)
+    public Task<IntegrityCheckResult> CanDeleteGroupAsync(string groupName)
     {
         try
         {
             var usersInGroup = repository.Users
-                .Where(u => u.Value.Groups.Contains(groupId))
+                .Where(u => u.Value.Groups.Contains(groupName))
                 .Select(u => u.Value.Email)
                 .ToList();
 
@@ -76,7 +76,7 @@ public class IntegrityChecker(PermissionsRepository repository, ILogger<Integrit
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to check group deletion integrity for {GroupId}", groupId);
+            logger.LogError(ex, "Failed to check group deletion integrity for {GroupName}", groupName);
             throw new OperationException("Operation failed", ex);
         }
     }
@@ -103,20 +103,16 @@ public class IntegrityChecker(PermissionsRepository repository, ILogger<Integrit
         });
     }
 
-    public Task<GroupDependencies> GetGroupDependenciesAsync(string groupId)
+    public Task<GroupDependencies> GetGroupDependenciesAsync(string groupName)
     {
-        var group = repository.Groups.GetValueOrDefault(groupId);
-        var groupName = group?.Name ?? groupId;
-
         var users = repository.Users
-            .Where(u => u.Value.Groups.Contains(groupId))
+            .Where(u => u.Value.Groups.Contains(groupName))
             .Select(u => u.Value.Email)
             .OrderBy(e => e)
             .ToList();
 
         return Task.FromResult(new GroupDependencies
         {
-            GroupId = groupId,
             GroupName = groupName,
             Users = users
         });
