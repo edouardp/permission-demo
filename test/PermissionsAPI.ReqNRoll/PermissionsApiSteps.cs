@@ -6,37 +6,31 @@ using Reqnroll;
 
 namespace PermissionsAPI.ReqNRoll;
 
+[Binding]
+public class TestHooks
+{
+    private static MySqlTestFixture? _fixture;
+    
+    [BeforeTestRun]
+    public static async Task BeforeTestRun()
+    {
+        _fixture = new MySqlTestFixture();
+        await _fixture.InitializeAsync();
+    }
+    
+    [AfterTestRun]
+    public static async Task AfterTestRun()
+    {
+        if (_fixture != null)
+            await _fixture.DisposeAsync();
+    }
+
+    public static string GetConnectionString() => _fixture?.ConnectionString ?? throw new InvalidOperationException("Fixture not initialized");
+}
+
 [UsedImplicitly]
 public class TestWebApplicationFactory : WebApplicationFactory<PermissionsApi.Program>
 {
-    private static readonly MySqlTestFixture _fixture = new();
-    private static bool _initialized;
-    private static readonly SemaphoreSlim _initLock = new(1, 1);
-
-    public TestWebApplicationFactory()
-    {
-        InitializeFixture().GetAwaiter().GetResult();
-    }
-
-    private static async Task InitializeFixture()
-    {
-        if (_initialized) return;
-        
-        await _initLock.WaitAsync();
-        try
-        {
-            if (!_initialized)
-            {
-                await _fixture.InitializeAsync();
-                _initialized = true;
-            }
-        }
-        finally
-        {
-            _initLock.Release();
-        }
-    }
-
     protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
     {
         PermissionsApi.Program.LevelSwitch.MinimumLevel = Serilog.Events.LogEventLevel.Fatal;
@@ -46,7 +40,7 @@ public class TestWebApplicationFactory : WebApplicationFactory<PermissionsApi.Pr
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["UseDatabase"] = "true",
-                ["ConnectionStrings:DefaultConnection"] = _fixture.ConnectionString
+                ["ConnectionStrings:DefaultConnection"] = TestHooks.GetConnectionString()
             });
         });
     }
