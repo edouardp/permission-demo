@@ -25,18 +25,16 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
         var permissions = new List<Permission>();
         var testId = Guid.NewGuid().ToString("N")[..8];
 
-        // Create 100 permissions with random properties
-        var tasks = new List<Task<Permission>>();
+        // Create 100 permissions sequentially to avoid connection pool exhaustion
         for (int i = 0; i < 100; i++)
         {
             var name = $"scale-perm-{testId}-{i}";
             var description = $"Scale test permission {i} - {random.Next(1000, 9999)}";
             var isDefault = random.Next(2) == 0;
             
-            tasks.Add(repo.CreatePermissionAsync(name, description, isDefault, CancellationToken.None));
+            var permission = await repo.CreatePermissionAsync(name, description, isDefault, CancellationToken.None);
+            permissions.Add(permission);
         }
-
-        permissions.AddRange(await Task.WhenAll(tasks));
 
         // Verify all permissions were created
         var allPermissions = await repo.GetAllPermissionsAsync(CancellationToken.None);
