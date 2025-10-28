@@ -1,13 +1,23 @@
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
+using PermissionsApi.TestSupport;
 using Reqnroll;
+using Xunit;
 
 namespace PermissionsAPI.ReqNRoll;
 
 [UsedImplicitly]
-public class TestWebApplicationFactory : WebApplicationFactory<PermissionsApi.Program>
+[Collection("MySQL")]
+public class TestWebApplicationFactory : WebApplicationFactory<PermissionsApi.Program>, IAsyncLifetime
 {
+    private readonly MySqlTestFixture _fixture;
+
+    public TestWebApplicationFactory(MySqlTestFixture fixture)
+    {
+        _fixture = fixture;
+    }
+
     protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
     {
         PermissionsApi.Program.LevelSwitch.MinimumLevel = Serilog.Events.LogEventLevel.Fatal;
@@ -16,10 +26,14 @@ public class TestWebApplicationFactory : WebApplicationFactory<PermissionsApi.Pr
         {
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["UseDatabase"] = "true"
+                ["UseDatabase"] = "true",
+                ["ConnectionStrings:DefaultConnection"] = _fixture.ConnectionString
             });
         });
     }
+
+    public Task InitializeAsync() => Task.CompletedTask;
+    public Task DisposeAsync() => Task.CompletedTask;
 }
 
 [Binding]
