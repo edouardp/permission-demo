@@ -37,7 +37,7 @@ public class IntegrityCheckerTests
     {
         await repository.CreatePermissionAsync("write", "Write access", false, CancellationToken.None);
         var group = await repository.CreateGroupAsync("editors", CancellationToken.None);
-        await repository.SetGroupPermissionAsync(group.Id, "write", "ALLOW", CancellationToken.None);
+        await repository.SetGroupPermissionAsync(group.Name, "write", "ALLOW", CancellationToken.None);
 
         var result = await checker.CanDeletePermissionAsync("write");
 
@@ -97,7 +97,7 @@ public class IntegrityCheckerTests
     {
         await repository.CreatePermissionAsync("mixed", "Mixed usage", false, CancellationToken.None);
         var group = await repository.CreateGroupAsync("team", CancellationToken.None);
-        await repository.SetGroupPermissionAsync(group.Id, "mixed", "ALLOW", CancellationToken.None);
+        await repository.SetGroupPermissionAsync(group.Name, "mixed", "ALLOW", CancellationToken.None);
         await repository.CreateUserAsync("user@example.com", [], CancellationToken.None);
         await repository.SetUserPermissionAsync("user@example.com", "mixed", "DENY", CancellationToken.None);
 
@@ -113,8 +113,8 @@ public class IntegrityCheckerTests
     {
         await repository.CreatePermissionAsync("temp", "Temporary", false, CancellationToken.None);
         var group = await repository.CreateGroupAsync("test-group", CancellationToken.None);
-        await repository.SetGroupPermissionAsync(group.Id, "temp", "ALLOW", CancellationToken.None);
-        await repository.RemoveGroupPermissionAsync(group.Id, "temp", CancellationToken.None);
+        await repository.SetGroupPermissionAsync(group.Name, "temp", "ALLOW", CancellationToken.None);
+        await repository.RemoveGroupPermissionAsync(group.Name, "temp", CancellationToken.None);
 
         var result = await checker.CanDeletePermissionAsync("temp");
 
@@ -147,7 +147,7 @@ public class IntegrityCheckerTests
     {
         var group = await repository.CreateGroupAsync("empty-group", CancellationToken.None);
 
-        var result = await checker.CanDeleteGroupAsync(group.Id);
+        var result = await checker.CanDeleteGroupAsync(group.Name);
 
         result.IsValid.Should().BeTrue();
         result.Reason.Should().BeNull();
@@ -157,9 +157,9 @@ public class IntegrityCheckerTests
     public async Task CanDeleteGroup_HasOneUser_ReturnsInvalid()
     {
         var group = await repository.CreateGroupAsync("active-group", CancellationToken.None);
-        await repository.CreateUserAsync("member@example.com", [group.Id], CancellationToken.None);
+        await repository.CreateUserAsync("member@example.com", [group.Name], CancellationToken.None);
 
-        var result = await checker.CanDeleteGroupAsync(group.Id);
+        var result = await checker.CanDeleteGroupAsync(group.Name);
 
         result.IsValid.Should().BeFalse();
         result.Reason.Should().Contain("member@example.com");
@@ -170,11 +170,11 @@ public class IntegrityCheckerTests
     public async Task CanDeleteGroup_HasMultipleUsers_ListsAllUsers()
     {
         var group = await repository.CreateGroupAsync("popular-group", CancellationToken.None);
-        await repository.CreateUserAsync("user1@example.com", [group.Id], CancellationToken.None);
-        await repository.CreateUserAsync("user2@example.com", [group.Id], CancellationToken.None);
-        await repository.CreateUserAsync("user3@example.com", [group.Id], CancellationToken.None);
+        await repository.CreateUserAsync("user1@example.com", [group.Name], CancellationToken.None);
+        await repository.CreateUserAsync("user2@example.com", [group.Name], CancellationToken.None);
+        await repository.CreateUserAsync("user3@example.com", [group.Name], CancellationToken.None);
 
-        var result = await checker.CanDeleteGroupAsync(group.Id);
+        var result = await checker.CanDeleteGroupAsync(group.Name);
 
         result.IsValid.Should().BeFalse();
         result.Reason.Should().Contain("user1@example.com");
@@ -207,10 +207,10 @@ public class IntegrityCheckerTests
     public async Task CanDeleteGroup_UserDeleted_ReturnsValid()
     {
         var group = await repository.CreateGroupAsync("temp-group", CancellationToken.None);
-        await repository.CreateUserAsync("temp-user@example.com", [group.Id], CancellationToken.None);
+        await repository.CreateUserAsync("temp-user@example.com", [group.Name], CancellationToken.None);
         await repository.DeleteUserAsync("temp-user@example.com", CancellationToken.None);
 
-        var result = await checker.CanDeleteGroupAsync(group.Id);
+        var result = await checker.CanDeleteGroupAsync(group.Name);
 
         result.IsValid.Should().BeTrue();
     }
@@ -220,9 +220,9 @@ public class IntegrityCheckerTests
     {
         await repository.CreatePermissionAsync("perm1", "Permission 1", false, CancellationToken.None);
         var group = await repository.CreateGroupAsync("perm-group", CancellationToken.None);
-        await repository.SetGroupPermissionAsync(group.Id, "perm1", "ALLOW", CancellationToken.None);
+        await repository.SetGroupPermissionAsync(group.Name, "perm1", "ALLOW", CancellationToken.None);
 
-        var result = await checker.CanDeleteGroupAsync(group.Id);
+        var result = await checker.CanDeleteGroupAsync(group.Name);
 
         result.IsValid.Should().BeTrue();
     }
@@ -232,8 +232,8 @@ public class IntegrityCheckerTests
     {
         await repository.CreatePermissionAsync("complex", "Complex perm", false, CancellationToken.None);
         var group = await repository.CreateGroupAsync("complex-group", CancellationToken.None);
-        await repository.SetGroupPermissionAsync(group.Id, "complex", "ALLOW", CancellationToken.None);
-        await repository.CreateUserAsync("user1@example.com", [group.Id], CancellationToken.None);
+        await repository.SetGroupPermissionAsync(group.Name, "complex", "ALLOW", CancellationToken.None);
+        await repository.CreateUserAsync("user1@example.com", [group.Name], CancellationToken.None);
         await repository.CreateUserAsync("user2@example.com", [], CancellationToken.None);
         await repository.SetUserPermissionAsync("user2@example.com", "complex", "DENY", CancellationToken.None);
 
@@ -241,15 +241,15 @@ public class IntegrityCheckerTests
         permResult.IsValid.Should().BeFalse();
         permResult.Reason.Should().Contain("complex-group");
 
-        var groupResult = await checker.CanDeleteGroupAsync(group.Id);
+        var groupResult = await checker.CanDeleteGroupAsync(group.Name);
         groupResult.IsValid.Should().BeFalse();
         groupResult.Reason.Should().Contain("user1@example.com");
 
         await repository.DeleteUserAsync("user1@example.com", CancellationToken.None);
-        groupResult = await checker.CanDeleteGroupAsync(group.Id);
+        groupResult = await checker.CanDeleteGroupAsync(group.Name);
         groupResult.IsValid.Should().BeTrue();
 
-        await repository.RemoveGroupPermissionAsync(group.Id, "complex", CancellationToken.None);
+        await repository.RemoveGroupPermissionAsync(group.Name, "complex", CancellationToken.None);
         permResult = await checker.CanDeletePermissionAsync("complex");
         permResult.IsValid.Should().BeFalse();
         permResult.Reason.Should().Contain("user2@example.com");
@@ -306,7 +306,7 @@ public class IntegrityCheckerTests
     {
         await repository.CreatePermissionAsync("mixed", "Mixed usage", false, CancellationToken.None);
         var group = await repository.CreateGroupAsync("mixed-group", CancellationToken.None);
-        await repository.SetGroupPermissionAsync(group.Id, "mixed", "ALLOW", CancellationToken.None);
+        await repository.SetGroupPermissionAsync(group.Name, "mixed", "ALLOW", CancellationToken.None);
         await repository.CreateUserAsync("user@example.com", [], CancellationToken.None);
         await repository.SetUserPermissionAsync("user@example.com", "mixed", "DENY", CancellationToken.None);
 
@@ -350,9 +350,8 @@ public class IntegrityCheckerTests
     {
         var group = await repository.CreateGroupAsync("empty", CancellationToken.None);
 
-        var deps = await checker.GetGroupDependenciesAsync(group.Id);
+        var deps = await checker.GetGroupDependenciesAsync(group.Name);
 
-        deps.GroupId.Should().Be(group.Id);
         deps.GroupName.Should().Be("empty");
         deps.Users.Should().BeEmpty();
     }
@@ -361,23 +360,21 @@ public class IntegrityCheckerTests
     public async Task GetGroupDependencies_HasUsers_ReturnsUserEmails()
     {
         var group = await repository.CreateGroupAsync("active", CancellationToken.None);
-        await repository.CreateUserAsync("member1@example.com", [group.Id], CancellationToken.None);
-        await repository.CreateUserAsync("member2@example.com", [group.Id], CancellationToken.None);
+        await repository.CreateUserAsync("member1@example.com", [group.Name], CancellationToken.None);
+        await repository.CreateUserAsync("member2@example.com", [group.Name], CancellationToken.None);
 
-        var deps = await checker.GetGroupDependenciesAsync(group.Id);
+        var deps = await checker.GetGroupDependenciesAsync(group.Name);
 
-        deps.GroupId.Should().Be(group.Id);
         deps.GroupName.Should().Be("active");
         deps.Users.Should().BeEquivalentTo("member1@example.com", "member2@example.com");
     }
 
     [Fact]
-    public async Task GetGroupDependencies_NonExistent_ReturnsGroupIdAsName()
+    public async Task GetGroupDependencies_NonExistent_ReturnsGroupName()
     {
-        var deps = await checker.GetGroupDependenciesAsync("nonexistent-id");
+        var deps = await checker.GetGroupDependenciesAsync("nonexistent-group");
 
-        deps.GroupId.Should().Be("nonexistent-id");
-        deps.GroupName.Should().Be("nonexistent-id");
+        deps.GroupName.Should().Be("nonexistent-group");
         deps.Users.Should().BeEmpty();
     }
 
@@ -385,11 +382,11 @@ public class IntegrityCheckerTests
     public async Task GetGroupDependencies_ResultsAreSorted()
     {
         var group = await repository.CreateGroupAsync("sorted-group", CancellationToken.None);
-        await repository.CreateUserAsync("zara@example.com", [group.Id], CancellationToken.None);
-        await repository.CreateUserAsync("alex@example.com", [group.Id], CancellationToken.None);
-        await repository.CreateUserAsync("mike@example.com", [group.Id], CancellationToken.None);
+        await repository.CreateUserAsync("zara@example.com", [group.Name], CancellationToken.None);
+        await repository.CreateUserAsync("alex@example.com", [group.Name], CancellationToken.None);
+        await repository.CreateUserAsync("mike@example.com", [group.Name], CancellationToken.None);
 
-        var deps = await checker.GetGroupDependenciesAsync(group.Id);
+        var deps = await checker.GetGroupDependenciesAsync(group.Name);
 
         deps.Users.Should().Equal("alex@example.com", "mike@example.com", "zara@example.com");
     }

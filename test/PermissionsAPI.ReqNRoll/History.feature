@@ -49,7 +49,6 @@ Feature: History Tracking
     Content-Type: application/json
 
     {
-      "id": [[TEST_GROUP_ID]],
       "name": "{{TEST_GROUP}}"
     }
     """
@@ -121,9 +120,8 @@ Feature: History Tracking
       {
         "changeType": "CREATE",
         "entityType": "Group",
-        "entityId": "{{TEST_GROUP_ID}}",
+        "entityId": "{{TEST_GROUP}}",
         "entityAfterChange": {
-          "id": "{{TEST_GROUP_ID}}",
           "name": "{{TEST_GROUP}}"
         }
       },
@@ -153,7 +151,7 @@ Feature: History Tracking
 
     Given the following request
     """
-    DELETE /api/v1/groups/{{TEST_GROUP_ID}} HTTP/1.1
+    DELETE /api/v1/groups/{{TEST_GROUP}} HTTP/1.1
     """
 
     Then the API returns the following response
@@ -219,7 +217,6 @@ Feature: History Tracking
     Content-Type: application/json
 
     {
-      "id": [[ENTITY_GROUP_ID]],
       "name": "{{ENTITY_GROUP}}"
     }
     """
@@ -318,7 +315,7 @@ Feature: History Tracking
     # Test group-specific history
     Given the following request
     """
-    GET /api/v1/groups/{{ENTITY_GROUP_ID}}/history HTTP/1.1
+    GET /api/v1/groups/{{ENTITY_GROUP}}/history HTTP/1.1
     """
 
     Then the API returns the following response
@@ -330,9 +327,8 @@ Feature: History Tracking
       {
         "changeType": "CREATE",
         "entityType": "Group",
-        "entityId": "{{ENTITY_GROUP_ID}}",
+        "entityId": "{{ENTITY_GROUP}}",
         "entityAfterChange": {
-          "id": "{{ENTITY_GROUP_ID}}",
           "name": "{{ENTITY_GROUP}}"
         }
       }
@@ -352,7 +348,7 @@ Feature: History Tracking
 
     Given the following request
     """
-    DELETE /api/v1/groups/{{ENTITY_GROUP_ID}} HTTP/1.1
+    DELETE /api/v1/groups/{{ENTITY_GROUP}} HTTP/1.1
     """
 
     Then the API returns the following response
