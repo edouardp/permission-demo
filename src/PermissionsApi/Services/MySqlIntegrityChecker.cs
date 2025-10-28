@@ -111,7 +111,7 @@ public class MySqlIntegrityChecker(string connectionString, ILogger<MySqlIntegri
         // Get groups using this permission
         const string groupSql = """
             SELECT DISTINCT g.name 
-            FROM groups g 
+            FROM `groups` g 
             INNER JOIN group_permissions gp ON g.name = gp.group_name 
             WHERE gp.permission_name = @PermissionName
             ORDER BY g.name
