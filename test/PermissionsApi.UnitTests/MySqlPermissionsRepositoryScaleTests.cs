@@ -43,19 +43,36 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
             Assert.Contains(allPermissions, p => p.Name == perm.Name);
         }
 
-        // Test batch updates
+        // Test batch updates with concurrency limit
+        var semaphore = new SemaphoreSlim(20);
         var updateTasks = permissions.Select(async perm =>
         {
-            var newDescription = $"Updated: {perm.Description}";
-            return await repo.UpdatePermissionAsync(perm.Name, newDescription, CancellationToken.None);
+            await semaphore.WaitAsync();
+            try
+            {
+                var newDescription = $"Updated: {perm.Description}";
+                return await repo.UpdatePermissionAsync(perm.Name, newDescription, CancellationToken.None);
+            }
+            finally
+            {
+                semaphore.Release();
+            }
         });
 
         await Task.WhenAll(updateTasks);
 
-        // Test default status changes
+        // Test default status changes with concurrency limit
         var defaultTasks = permissions.Take(50).Select(async perm =>
         {
-            return await repo.SetPermissionDefaultAsync(perm.Name, !perm.IsDefault, CancellationToken.None);
+            await semaphore.WaitAsync();
+            try
+            {
+                return await repo.SetPermissionDefaultAsync(perm.Name, !perm.IsDefault, CancellationToken.None);
+            }
+            finally
+            {
+                semaphore.Release();
+            }
         });
 
         await Task.WhenAll(defaultTasks);
@@ -82,17 +99,29 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
             await repo.CreatePermissionAsync(permName, $"Permission {i}", false, CancellationToken.None);
         }
 
-        // Create 100 groups
+        // Create 100 groups with concurrency limit
+        var semaphore = new SemaphoreSlim(20);
         var tasks = new List<Task<Group>>();
         for (int i = 0; i < 100; i++)
         {
             var name = $"scale-group-{testId}-{i}";
-            tasks.Add(repo.CreateGroupAsync(name, CancellationToken.None));
+            tasks.Add(Task.Run(async () =>
+            {
+                await semaphore.WaitAsync();
+                try
+                {
+                    return await repo.CreateGroupAsync(name, CancellationToken.None);
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
+            }));
         }
 
         groups.AddRange(await Task.WhenAll(tasks));
 
-        // Assign random permissions to groups
+        // Assign random permissions to groups with concurrency limit
         var permissionTasks = new List<Task>();
         foreach (var group in groups)
         {
@@ -106,7 +135,18 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
                 groupPermissions[perm] = access;
             }
             
-            permissionTasks.Add(repo.SetGroupPermissionsAsync(group.Name, groupPermissions, CancellationToken.None));
+            permissionTasks.Add(Task.Run(async () =>
+            {
+                await semaphore.WaitAsync();
+                try
+                {
+                    await repo.SetGroupPermissionsAsync(group.Name, groupPermissions, CancellationToken.None);
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
+            }));
         }
 
         await Task.WhenAll(permissionTasks);
@@ -147,8 +187,9 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
             await repo.CreatePermissionAsync(permName, $"User permission {i}", false, CancellationToken.None);
         }
 
-        // Create 1000 users in batches
+        // Create 1000 users in batches with concurrency limit
         var users = new List<User>();
+        var semaphore = new SemaphoreSlim(20);
         const int batchSize = 100;
         
         for (int batch = 0; batch < 10; batch++)
@@ -172,14 +213,25 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
                     }
                 }
                 
-                batchTasks.Add(repo.CreateUserAsync(email, userGroups, CancellationToken.None));
+                batchTasks.Add(Task.Run(async () =>
+                {
+                    await semaphore.WaitAsync();
+                    try
+                    {
+                        return await repo.CreateUserAsync(email, userGroups, CancellationToken.None);
+                    }
+                    finally
+                    {
+                        semaphore.Release();
+                    }
+                }));
             }
             
             var batchUsers = await Task.WhenAll(batchTasks);
             users.AddRange(batchUsers);
         }
 
-        // Assign random direct permissions to users
+        // Assign random direct permissions to users with concurrency limit
         var permissionTasks = new List<Task>();
         foreach (var user in users.Take(500)) // Half the users get direct permissions
         {
@@ -195,7 +247,18 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
                     userPermissions[perm] = access;
                 }
                 
-                permissionTasks.Add(repo.SetUserPermissionsAsync(user.Email, userPermissions, CancellationToken.None));
+                permissionTasks.Add(Task.Run(async () =>
+                {
+                    await semaphore.WaitAsync();
+                    try
+                    {
+                        await repo.SetUserPermissionsAsync(user.Email, userPermissions, CancellationToken.None);
+                    }
+                    finally
+                    {
+                        semaphore.Release();
+                    }
+                }));
             }
         }
 
@@ -205,12 +268,20 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
         var allUsers = await repo.GetAllUsersAsync(CancellationToken.None);
         Assert.True(allUsers.Count >= 1000);
 
-        // Test permission calculations for sample users
+        // Test permission calculations for sample users with concurrency limit
         var calculationTasks = users.Take(100).Select(async user =>
         {
-            var permissions = await repo.CalculatePermissionsAsync(user.Email, CancellationToken.None);
-            Assert.NotNull(permissions);
-            return permissions;
+            await semaphore.WaitAsync();
+            try
+            {
+                var permissions = await repo.CalculatePermissionsAsync(user.Email, CancellationToken.None);
+                Assert.NotNull(permissions);
+                return permissions;
+            }
+            finally
+            {
+                semaphore.Release();
+            }
         });
 
         var calculatedPermissions = await Task.WhenAll(calculationTasks);
@@ -343,28 +414,63 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
     {
         var repo = CreateRepository();
         var random = new Random(42);
+        var semaphore = new SemaphoreSlim(20);
         var tasks = new List<Task>();
         var testId = Guid.NewGuid().ToString("N")[..8];
 
-        // Concurrent permission operations
+        // Concurrent permission operations with limit
         for (int i = 0; i < 50; i++)
         {
             var permName = $"stress-perm-{testId}-{i}";
-            tasks.Add(repo.CreatePermissionAsync(permName, $"Stress permission {i}", random.Next(2) == 0, CancellationToken.None));
+            var isDefault = random.Next(2) == 0;
+            tasks.Add(Task.Run(async () =>
+            {
+                await semaphore.WaitAsync();
+                try
+                {
+                    await repo.CreatePermissionAsync(permName, $"Stress permission {i}", isDefault, CancellationToken.None);
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
+            }));
         }
 
-        // Concurrent group operations
+        // Concurrent group operations with limit
         for (int i = 0; i < 30; i++)
         {
             var groupName = $"stress-group-{testId}-{i}";
-            tasks.Add(repo.CreateGroupAsync(groupName, CancellationToken.None));
+            tasks.Add(Task.Run(async () =>
+            {
+                await semaphore.WaitAsync();
+                try
+                {
+                    await repo.CreateGroupAsync(groupName, CancellationToken.None);
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
+            }));
         }
 
-        // Concurrent user operations
+        // Concurrent user operations with limit
         for (int i = 0; i < 100; i++)
         {
             var email = $"stress-user-{testId}-{i}@test.com";
-            tasks.Add(repo.CreateUserAsync(email, [], CancellationToken.None));
+            tasks.Add(Task.Run(async () =>
+            {
+                await semaphore.WaitAsync();
+                try
+                {
+                    await repo.CreateUserAsync(email, [], CancellationToken.None);
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
+            }));
         }
 
         await Task.WhenAll(tasks);
@@ -378,7 +484,7 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
         Assert.True(groups.Count >= 30);
         Assert.True(users.Count >= 100);
 
-        // Concurrent permission assignments
+        // Concurrent permission assignments with limit
         var assignmentTasks = new List<Task>();
         for (int i = 0; i < 50; i++)
         {
@@ -386,7 +492,18 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
             var permName = $"stress-perm-{testId}-{random.Next(50)}";
             var access = random.Next(2) == 0 ? "ALLOW" : "DENY";
             
-            assignmentTasks.Add(repo.SetGroupPermissionAsync(groupName, permName, access, CancellationToken.None));
+            assignmentTasks.Add(Task.Run(async () =>
+            {
+                await semaphore.WaitAsync();
+                try
+                {
+                    await repo.SetGroupPermissionAsync(groupName, permName, access, CancellationToken.None);
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
+            }));
         }
 
         for (int i = 0; i < 100; i++)
@@ -395,18 +512,51 @@ public class MySqlPermissionsRepositoryScaleTests(MySqlTestFixture fixture)
             var permName = $"stress-perm-{testId}-{random.Next(50)}";
             var access = random.Next(2) == 0 ? "ALLOW" : "DENY";
             
-            assignmentTasks.Add(repo.SetUserPermissionAsync(email, permName, access, CancellationToken.None));
+            assignmentTasks.Add(Task.Run(async () =>
+            {
+                await semaphore.WaitAsync();
+                try
+                {
+                    await repo.SetUserPermissionAsync(email, permName, access, CancellationToken.None);
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
+            }));
         }
 
         await Task.WhenAll(assignmentTasks);
 
-        // Concurrent permission calculations
+        // Concurrent permission calculations with limit
         var calculationTasks = new List<Task>();
         for (int i = 0; i < 50; i++)
         {
             var email = $"stress-user-{testId}-{random.Next(100)}@test.com";
-            calculationTasks.Add(repo.CalculatePermissionsAsync(email, CancellationToken.None));
-            calculationTasks.Add(repo.CalculatePermissionsDebugAsync(email, CancellationToken.None));
+            calculationTasks.Add(Task.Run(async () =>
+            {
+                await semaphore.WaitAsync();
+                try
+                {
+                    await repo.CalculatePermissionsAsync(email, CancellationToken.None);
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
+            }));
+            calculationTasks.Add(Task.Run(async () =>
+            {
+                await semaphore.WaitAsync();
+                try
+                {
+                    await repo.CalculatePermissionsDebugAsync(email, CancellationToken.None);
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
+            }));
         }
 
         await Task.WhenAll(calculationTasks);

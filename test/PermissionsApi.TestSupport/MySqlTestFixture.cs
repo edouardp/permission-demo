@@ -49,12 +49,12 @@ public class MySqlTestFixture : IAsyncLifetime
         if (UseLocalMySql)
         {
             // Connect to local MySQL instance
-            ConnectionString = "Server=localhost;Port=3306;Database=permissions_test;Uid=root;Pwd=;";
+            ConnectionString = "Server=localhost;Port=3306;Database=permissions_test;Uid=root;Pwd=;MaxPoolSize=200;MinPoolSize=10;";
         }
         else
         {
             await mySqlContainer!.StartAsync();
-            ConnectionString = mySqlContainer.GetConnectionString();
+            ConnectionString = mySqlContainer.GetConnectionString() + ";MaxPoolSize=200;MinPoolSize=10;";
         }
         
         // Run database migrations
