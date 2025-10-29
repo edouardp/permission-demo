@@ -12,7 +12,7 @@ public class MySqlPermissionsRepository(string connectionString, IHistoryService
 {
     private readonly ILogger<MySqlPermissionsRepository> _logger = logger;
     
-    private static readonly ResiliencePipeline _retryPipeline = new ResiliencePipelineBuilder()
+    private readonly ResiliencePipeline _retryPipeline = new ResiliencePipelineBuilder()
         .AddRetry(new RetryStrategyOptions
         {
             MaxRetryAttempts = 5,
@@ -20,7 +20,17 @@ public class MySqlPermissionsRepository(string connectionString, IHistoryService
             BackoffType = DelayBackoffType.Exponential,
             UseJitter = true,
             // Retry on all transient errors: deadlocks, connection failures, timeouts, Aurora failovers, etc.
-            ShouldHandle = new PredicateBuilder().Handle<MySqlException>(ex => ex.IsTransient)
+            ShouldHandle = new PredicateBuilder().Handle<MySqlException>(ex => ex.IsTransient),
+            OnRetry = args =>
+            {
+                var exception = args.Outcome.Exception as MySqlException;
+                logger.LogWarning(exception,
+                    "Transient MySQL error (ErrorCode: {ErrorCode}) on attempt {Attempt}. Retrying after {DelayMs}ms",
+                    exception?.ErrorCode,
+                    args.AttemptNumber + 1,
+                    args.RetryDelay.TotalMilliseconds);
+                return ValueTask.CompletedTask;
+            }
         })
         .Build();
 
