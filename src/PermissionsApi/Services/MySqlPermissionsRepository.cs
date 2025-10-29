@@ -809,8 +809,8 @@ public class MySqlPermissionsRepository(string connectionString, IHistoryService
     #endregion
 }
 
-// Helper class for when we need to pass an IEntity but don't have one
-internal record EmptyEntity : IEntity
+// Helper class for when we need to pass an IEntity but don't have one (e.g., DELETE operations)
+public record EmptyEntity : IEntity
 {
     public string Id => string.Empty;
 }
