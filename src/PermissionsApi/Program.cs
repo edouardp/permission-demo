@@ -46,7 +46,7 @@ namespace PermissionsApi
                 builder.Services.AddSingleton(TimeProvider.System);
 
                 // Configure database implementation
-                var useDatabase = builder.Configuration.GetValue<bool>("UseDatabase", false);
+                var useDatabase = builder.Configuration.GetValue<bool>("UseDatabase", true);
                 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
                 if (useDatabase && !string.IsNullOrEmpty(connectionString))
