@@ -10,6 +10,8 @@ namespace PermissionsApi.Services;
 public class MySqlPermissionsRepository(string connectionString, IHistoryService historyService, ILogger<MySqlPermissionsRepository> logger)
     : IPermissionsRepository
 {
+    private readonly ILogger<MySqlPermissionsRepository> _logger = logger;
+    
     private static readonly ResiliencePipeline _retryPipeline = new ResiliencePipelineBuilder()
         .AddRetry(new RetryStrategyOptions
         {
@@ -17,9 +19,11 @@ public class MySqlPermissionsRepository(string connectionString, IHistoryService
             Delay = TimeSpan.FromMilliseconds(50),
             BackoffType = DelayBackoffType.Exponential,
             UseJitter = true,
-            ShouldHandle = new PredicateBuilder().Handle<MySqlException>(ex => ex.ErrorCode == MySqlErrorCode.LockDeadlock)
+            // Retry on all transient errors: deadlocks, connection failures, timeouts, Aurora failovers, etc.
+            ShouldHandle = new PredicateBuilder().Handle<MySqlException>(ex => ex.IsTransient)
         })
         .Build();
+
 
     private async Task<MySqlConnection> GetConnectionAsync()
     {
@@ -32,22 +36,25 @@ public class MySqlPermissionsRepository(string connectionString, IHistoryService
 
     public async Task<Permission> CreatePermissionAsync(string name, string description, bool isDefault, CancellationToken ct, string? principal = null, string? reason = null)
     {
-        using var connection = await GetConnectionAsync();
-        using var transaction = await connection.BeginTransactionAsync(ct);
-        
-        const string sql = """
-            INSERT INTO permissions (name, description, is_default) 
-            VALUES (@Name, @Description, @IsDefault)
-            """;
-        
-        await connection.ExecuteAsync(sql, new { Name = name, Description = description, IsDefault = isDefault }, transaction);
-        await transaction.CommitAsync(ct);
-        
-        var permission = new Permission { Name = name, Description = description, IsDefault = isDefault };
-        await historyService.RecordChangeAsync("CREATE", "Permission", name, permission, principal, reason);
-        
-        logger.LogInformation("Created permission {PermissionName} (IsDefault: {IsDefault})", name, isDefault);
-        return permission;
+        return await _retryPipeline.ExecuteAsync(async token =>
+        {
+            using var connection = await GetConnectionAsync();
+            using var transaction = await connection.BeginTransactionAsync(token);
+            
+            const string sql = """
+                INSERT INTO permissions (name, description, is_default) 
+                VALUES (@Name, @Description, @IsDefault)
+                """;
+            
+            await connection.ExecuteAsync(sql, new { Name = name, Description = description, IsDefault = isDefault }, transaction);
+            await transaction.CommitAsync(token);
+            
+            var permission = new Permission { Name = name, Description = description, IsDefault = isDefault };
+            await historyService.RecordChangeAsync("CREATE", "Permission", name, permission, principal, reason);
+            
+            _logger.LogInformation("Created permission {PermissionName} (IsDefault: {IsDefault})", name, isDefault);
+            return permission;
+        }, ct);
     }
 
     public async Task<Permission?> GetPermissionAsync(string name, CancellationToken ct)
@@ -149,7 +156,7 @@ public class MySqlPermissionsRepository(string connectionString, IHistoryService
         var group = new Group { Name = name };
         await historyService.RecordChangeAsync("CREATE", "Group", name, group, principal, reason);
         
-        logger.LogInformation("Created group {GroupName}", name);
+        _logger.LogInformation("Created group {GroupName}", name);
         return group;
     }
 
@@ -167,7 +174,7 @@ public class MySqlPermissionsRepository(string connectionString, IHistoryService
         await connection.ExecuteAsync(sql, new { GroupName = groupName, Permission = permission, Access = access }, transaction);
         await transaction.CommitAsync(ct);
         
-        logger.LogInformation("Set group {GroupName} permission {Permission} to {Access}", groupName, permission, access);
+        _logger.LogInformation("Set group {GroupName} permission {Permission} to {Access}", groupName, permission, access);
     }
 
     public async Task SetGroupPermissionsAsync(string groupName, Dictionary<string, string> permissions, CancellationToken ct, string? principal = null, string? reason = null)
@@ -227,7 +234,7 @@ public class MySqlPermissionsRepository(string connectionString, IHistoryService
                 await historyService.RecordChangeAsync("UPDATE", "Group", groupName, group, principal, reason);
             }
 
-            logger.LogInformation("Set group {GroupName} permissions with {Count} permissions", groupName, permissions.Count);
+            _logger.LogInformation("Set group {GroupName} permissions with {Count} permissions", groupName, permissions.Count);
         }, ct);
     }
 
@@ -240,7 +247,7 @@ public class MySqlPermissionsRepository(string connectionString, IHistoryService
     await connection.ExecuteAsync(sql, new { GroupName = groupName, Permission = permission }, transaction);
     await transaction.CommitAsync(ct);
 
-    logger.LogInformation("Removed group {GroupName} permission {Permission}", groupName, permission);
+    _logger.LogInformation("Removed group {GroupName} permission {Permission}", groupName, permission);
     }
 
     public async Task DeleteGroupAsync(string groupName, CancellationToken ct)
@@ -281,7 +288,7 @@ public class MySqlPermissionsRepository(string connectionString, IHistoryService
         }
 
         await historyService.RecordChangeAsync("DELETE", "Group", groupName, (IEntity)groupEntity);
-        logger.LogInformation("Deleted group {GroupName}", groupName);
+        _logger.LogInformation("Deleted group {GroupName}", groupName);
     }
     }
 
@@ -382,7 +389,7 @@ public class MySqlPermissionsRepository(string connectionString, IHistoryService
             var user = new User { Email = email, Groups = groupList };
             await historyService.RecordChangeAsync("CREATE", "User", email, user, principal, reason);
 
-            logger.LogInformation("Created user {Email} with {GroupCount} groups", email, groupList.Count);
+            _logger.LogInformation("Created user {Email} with {GroupCount} groups", email, groupList.Count);
             return user;
         }, ct);
     }
@@ -401,7 +408,7 @@ public class MySqlPermissionsRepository(string connectionString, IHistoryService
     await connection.ExecuteAsync(sql, new { Email = email, Permission = permission, Access = access }, transaction);
     await transaction.CommitAsync(ct);
 
-    logger.LogInformation("Set user {Email} permission {Permission} to {Access}", email, permission, access);
+    _logger.LogInformation("Set user {Email} permission {Permission} to {Access}", email, permission, access);
     }
 
     public async Task SetUserPermissionsAsync(string email, Dictionary<string, string> permissions, CancellationToken ct, string? principal = null, string? reason = null)
@@ -471,7 +478,7 @@ public class MySqlPermissionsRepository(string connectionString, IHistoryService
                 await historyService.RecordChangeAsync("UPDATE", "User", email, user, principal, reason);
             }
 
-            logger.LogInformation("Set user {Email} permissions with {Count} permissions", email, permissions.Count);
+            _logger.LogInformation("Set user {Email} permissions with {Count} permissions", email, permissions.Count);
         }, ct);
     }
 
@@ -484,7 +491,7 @@ public class MySqlPermissionsRepository(string connectionString, IHistoryService
     await connection.ExecuteAsync(sql, new { Email = email, Permission = permission }, transaction);
     await transaction.CommitAsync(ct);
 
-    logger.LogInformation("Removed user {Email} permission {Permission}", email, permission);
+    _logger.LogInformation("Removed user {Email} permission {Permission}", email, permission);
     }
 
     public async Task DeleteUserAsync(string email, CancellationToken ct)
@@ -536,7 +543,7 @@ public class MySqlPermissionsRepository(string connectionString, IHistoryService
         }
 
         await historyService.RecordChangeAsync("DELETE", "User", email, (IEntity)userEntity);
-        logger.LogInformation("Deleted user {Email}", email);
+        _logger.LogInformation("Deleted user {Email}", email);
     }
     }
 
@@ -686,7 +693,7 @@ public class MySqlPermissionsRepository(string connectionString, IHistoryService
             permissionResults[permissionName] = result;
         }
         
-        logger.LogDebug("Calculated {PermissionCount} permissions for user {Email}", permissionResults.Count, email);
+        _logger.LogDebug("Calculated {PermissionCount} permissions for user {Email}", permissionResults.Count, email);
         return permissionResults;
     }
 
