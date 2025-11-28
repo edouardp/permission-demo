@@ -524,3 +524,71 @@ Feature: History Tracking
     """
     HTTP/1.1 204 NoContent
     """
+
+  Scenario: DELETE operations are recorded in history with EmptyEntity
+    # WHEN entities are deleted
+    # THEN the system SHALL record DELETE with EmptyEntity that can be serialized
+    # This is a regression test for: "Runtime type 'EmptyEntity' is not supported by polymorphic type 'IEntity'"
+    
+    Given the variable 'DELETE_PERM' is set to 'delete-test-{{GUID()}}'
+    
+    # Create a permission
+    Given the following request
+    """
+    POST /api/v1/permissions HTTP/1.1
+    Content-Type: application/json
+
+    {
+      "name": "{{DELETE_PERM}}",
+      "description": "Permission to be deleted",
+      "isDefault": false
+    }
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 201 Created
+    Content-Type: application/json
+
+    {
+      "name": "{{DELETE_PERM}}",
+      "description": "Permission to be deleted",
+      "isDefault": false
+    }
+    """
+
+    # Delete the permission
+    Given the following request
+    """
+    DELETE /api/v1/permissions/{{DELETE_PERM}} HTTP/1.1
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 204 NoContent
+    """
+
+    # Verify DELETE is recorded in history and can be serialized (no exception thrown)
+    Given the following request
+    """
+    GET /api/v1/permissions/{{DELETE_PERM}}/history HTTP/1.1
+    """
+
+    Then the API returns the following response
+    """
+    HTTP/1.1 200 OK
+    Content-Type: application/json
+
+    [
+      {
+        "changeType": "DELETE",
+        "entityType": "Permission",
+        "entityId": "{{DELETE_PERM}}"
+      },
+      {
+        "changeType": "CREATE",
+        "entityType": "Permission",
+        "entityId": "{{DELETE_PERM}}"
+      }
+    ]
+    """
